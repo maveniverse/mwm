@@ -19,7 +19,7 @@ public final class Version {
     private Version() {}
 
     public static String version() {
-        return loadClasspathProperties("eu.maveniverse.maven.nisse", "core").getOrDefault("version", "<unknown>");
+        return loadClasspathProperties("eu.maveniverse.maven.mwm", "core").getOrDefault("version", "<unknown>");
     }
 
     public static Map<String, String> loadClasspathProperties(String groupId, String artifactId) {
