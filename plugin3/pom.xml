@@ -36,6 +36,11 @@
       </exclusions>
     </dependency>
 
+    <dependency>
+      <groupId>eu.maveniverse.maven.shared</groupId>
+      <artifactId>plugin</artifactId>
+    </dependency>
+
     <!-- Maven -->
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -93,8 +98,7 @@
         <configuration>
           <goalPrefix>mwm</goalPrefix>
           <requiredMavenVersion>${requireRuntimeMavenVersion.range}</requiredMavenVersion>
-          <!-- TODO: https://github.com/apache/maven/issues/11575 -->
-          <requiredJavaVersion>[1.8,)</requiredJavaVersion>
+          <requiredJavaVersion>${requireRuntimeJavaVersion.range}</requiredJavaVersion>
         </configuration>
       </plugin>
     </plugins>
