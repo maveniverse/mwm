@@ -74,7 +74,7 @@
     <maven3ResolverVersion>1.9.27</maven3ResolverVersion>
     <maven4Version>4.0.0-rc-5</maven4Version>
 
-    <version.slf4j>1.7.36</version.slf4j>
+    <version.slf4j>2.0.18</version.slf4j>
     <version.sisu>1.1.0</version.sisu>
   </properties>
 
