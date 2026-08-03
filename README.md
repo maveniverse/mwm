@@ -38,7 +38,7 @@ To use it, add the following to your project or user-wide `extensions.xml`:
     <extension>
         <groupId>eu.maveniverse.maven.mwm</groupId>
         <artifactId>extension3</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
+        <version>${last-mvm-release-version}</version>
     </extension>
 </extensions>
 ```
