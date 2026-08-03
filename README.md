@@ -22,6 +22,19 @@ Workspace ID is used to derive workspace output directory, which is by default: 
 MWM _assumes user performs regular repository hygiene of deleting local repository_. Or even better, as this core
 extension is 3.10+, user may use Mimir as well in combination.
 
+To use it, add the following to your project or user-wide `extensions.xml`:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<extensions>
+    <extension>
+        <groupId>eu.maveniverse.maven.mwm</groupId>
+        <artifactId>extension3</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </extension>
+</extensions>
+```
+
 * Requirements:
 * Java: 8+
 * Maven: 3.10+
