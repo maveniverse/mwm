@@ -9,5 +9,4 @@ module eu.maveniverse.maven.mwm.core {
     requires java.base;
 
     exports eu.maveniverse.maven.mwm.core;
-    exports eu.maveniverse.maven.mwm.core.simple;
 }

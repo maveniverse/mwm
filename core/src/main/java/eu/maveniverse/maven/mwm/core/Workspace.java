@@ -7,14 +7,30 @@
  */
 package eu.maveniverse.maven.mwm.core;
 
+import java.nio.file.Path;
 import java.util.Map;
 
 /**
- * Workspace manager, that detects and manages workspaces.
+ * Maven Workspace.
  */
-public interface WorkspaceManager {
+public interface Workspace {
     /**
-     * Detects and may create a workspace handle.
+     * The ID of the workspace.
      */
-    Map<String, String> createProperties(Map<String, String> properties);
+    String workspaceId();
+
+    /**
+     * The handler of workspace.
+     */
+    WorkspaceHandler workspaceHandler();
+
+    /**
+     * The workspace properties.
+     */
+    Map<String, String> properties();
+
+    /**
+     * The location of the build output directory.
+     */
+    Path buildOutputDirectory();
 }

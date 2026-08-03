@@ -10,7 +10,7 @@ package eu.maveniverse.maven.mwm.plugin3;
 import eu.maveniverse.maven.mwm.core.NisseConfiguration;
 import eu.maveniverse.maven.mwm.core.NisseManager;
 import eu.maveniverse.maven.mwm.core.PropertyKeyNamingStrategies;
-import eu.maveniverse.maven.mwm.core.simple.SimpleNisseConfiguration;
+import eu.maveniverse.maven.mwm.core.internal.SimpleNisseConfiguration;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Map;

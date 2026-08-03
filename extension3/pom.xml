@@ -24,6 +24,15 @@
   <dependencies>
     <!-- Nisse -->
     <dependency>
+      <groupId>eu.maveniverse.maven.nisse</groupId>
+      <artifactId>core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>eu.maveniverse.maven.nisse.sources</groupId>
+      <artifactId>jgit-source</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>eu.maveniverse.maven.mwm</groupId>
       <artifactId>core</artifactId>
       <exclusions>

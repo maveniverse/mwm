@@ -7,15 +7,16 @@
  */
 package eu.maveniverse.maven.mwm.core;
 
+import java.nio.file.Path;
 import java.util.Map;
+import java.util.Optional;
 
 /**
- * Nisse manager, that manages sources.
+ * Workspace manager, that detects and manages workspaces.
  */
-public interface NisseManager {
+public interface WorkspaceManager {
     /**
-     * Creates "final" map of properties contributed from {@link PropertySource} flattened (by source priorities).
-     * Keys are also "namespaced" with prefix {@code "nisse.$source."}. Never returns {@code null}.
+     * Detects and may create a workspace handle.
      */
-    Map<String, String> createProperties(NisseConfiguration configuration);
+    Optional<Workspace> detectWorkspace(Path rootDirectory, Path localRepository, Map<String, String> properties);
 }

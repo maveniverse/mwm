@@ -5,46 +5,82 @@
  * which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  */
-package eu.maveniverse.maven.mwm.core.simple;
+package eu.maveniverse.maven.mwm.core.internal;
 
 import static java.util.Objects.requireNonNull;
 
-import eu.maveniverse.maven.mwm.core.NisseConfiguration;
-import eu.maveniverse.maven.mwm.core.NisseManager;
-import eu.maveniverse.maven.mwm.core.PropertySource;
+import eu.maveniverse.maven.mwm.core.Workspace;
+import eu.maveniverse.maven.mwm.core.WorkspaceHandler;
+import eu.maveniverse.maven.mwm.core.WorkspaceManager;
+import eu.maveniverse.maven.nisse.core.NisseConfiguration;
+import eu.maveniverse.maven.nisse.core.NisseManager;
+import eu.maveniverse.maven.nisse.core.PropertyKeyNamingStrategies;
+import eu.maveniverse.maven.nisse.core.simple.SimpleNisseConfiguration;
+import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.function.BiFunction;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Singleton
 @Named
-public class SimpleNisseManager implements NisseManager {
-    private final List<PropertySource> sources;
+public class DefaultWorkspaceManager implements WorkspaceManager {
+    private final NisseManager nisseManager;
+    private final Map<String, WorkspaceHandler> workspaceHandlers;
 
     @Inject
-    public SimpleNisseManager(List<PropertySource> sources) {
-        this.sources = requireNonNull(sources, "sources");
+    public DefaultWorkspaceManager(NisseManager nisseManager, Map<String, WorkspaceHandler> workspaceHandlers) {
+        this.nisseManager = requireNonNull(nisseManager);
+        this.workspaceHandlers = requireNonNull(workspaceHandlers);
     }
 
     @Override
-    public Map<String, String> createProperties(NisseConfiguration configuration) {
-        requireNonNull(configuration, "configuration");
-        BiFunction<PropertySource, String, List<String>> propertyKeyNamingStrategy =
-                configuration.propertyKeyNamingStrategy();
-        HashMap<String, String> properties = new HashMap<>();
-        for (PropertySource source : this.sources) {
-            if (configuration.isPropertySourceActive(source)) {
-                source.getProperties(configuration).forEach((key, value) -> {
-                    for (String translated : propertyKeyNamingStrategy.apply(source, key)) {
-                        properties.put(translated, value);
-                    }
-                });
+    public Optional<Workspace> detectWorkspace(
+            Path rootDirectory, Path localRepository, Map<String, String> properties) {
+        // late create; https://github.com/apache/maven/issues/12668
+        final Logger logger = LoggerFactory.getLogger(getClass());
+        HashMap<String, String> props = new HashMap<>(properties);
+        if (!props.containsKey(WorkspaceHandler.KEY_REMOTE_NAME)
+                || !props.containsKey(WorkspaceHandler.KEY_REMOTE_URL)
+                || !props.containsKey(WorkspaceHandler.KEY_BRANCH_NAME)) {
+            logger.debug("Nisse properties absent; running Nisse");
+            props.putAll(nisseProperties(rootDirectory, props));
+        }
+        if (!props.containsKey(WorkspaceHandler.KEY_REMOTE_NAME)
+                || !props.containsKey(WorkspaceHandler.KEY_REMOTE_URL)
+                || !props.containsKey(WorkspaceHandler.KEY_BRANCH_NAME)) {
+            logger.info("Nisse properties absent after running Nisse; bailing out");
+            return Optional.empty();
+        }
+        for (Map.Entry<String, WorkspaceHandler> entry : workspaceHandlers.entrySet()) {
+            Optional<Workspace> wo = entry.getValue().detectWorkspace(rootDirectory, localRepository, props);
+            if (wo.isPresent()) {
+                logger.debug("Workspace detected by handler: {}", entry.getKey());
+                return wo;
             }
         }
-        return properties;
+        logger.debug("No workspace detected by any handler");
+        return Optional.empty();
+    }
+
+    /**
+     * Creates Nisse properties as fallback; if Nisse properties detected, is not invoked.
+     */
+    private Map<String, String> nisseProperties(Path rootDirectory, Map<String, String> properties) {
+        NisseConfiguration configuration = SimpleNisseConfiguration.builder()
+                .withSystemProperties(properties)
+                .withCurrentWorkingDirectory(rootDirectory)
+                .withSessionRootDirectory(rootDirectory)
+                .combinePropertyKeyNamingStrategy(PropertyKeyNamingStrategies.translated(
+                        Collections.emptyMap(),
+                        PropertyKeyNamingStrategies.sourcePrefixed(),
+                        PropertyKeyNamingStrategies.defaultStrategy()))
+                .build();
+        return nisseManager.createProperties(configuration);
     }
 }

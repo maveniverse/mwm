@@ -7,11 +7,6 @@
  */
 
 /**
- * Out of the box implementations for Nisse Core {@link NisseConfiguration}
- * and {@link NisseManager} deemed "simple". But
- * despite being simple, they work in almost all cases.
+ * Out of the box implementations for MWM.
  */
-package eu.maveniverse.maven.mwm.core.simple;
-
-import eu.maveniverse.maven.mwm.core.NisseConfiguration;
-import eu.maveniverse.maven.mwm.core.NisseManager;
+package eu.maveniverse.maven.mwm.core.internal;

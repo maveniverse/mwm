@@ -66,7 +66,7 @@
     Run time: Maven 3.10+ and latest Java 8 LTS.
     -->
     <maven.compiler.release>8</maven.compiler.release>
-    <requireRuntimeMavenVersion.range>[3.10,)</requireRuntimeMavenVersion.range>
+    <requireRuntimeMavenVersion.range>[3.10.0-rc-1,)</requireRuntimeMavenVersion.range>
 
     <!-- Maven 3 and 4 versions -->
     <maven3Version>3.10.0-rc-1</maven3Version>
@@ -75,6 +75,7 @@
     <version.slf4j>2.0.18</version.slf4j>
     <version.sisu>1.1.0</version.sisu>
     <version.maveniverseShared>0.2.5</version.maveniverseShared>
+    <version.nisse>0.9.4</version.nisse>
   </properties>
 
   <dependencyManagement>
@@ -105,6 +106,18 @@
         <groupId>eu.maveniverse.maven.shared</groupId>
         <artifactId>plugin</artifactId>
         <version>${version.maveniverseShared}</version>
+      </dependency>
+
+      <!-- Nisse -->
+      <dependency>
+        <groupId>eu.maveniverse.maven.nisse</groupId>
+        <artifactId>core</artifactId>
+        <version>${version.nisse}</version>
+      </dependency>
+      <dependency>
+        <groupId>eu.maveniverse.maven.nisse.sources</groupId>
+        <artifactId>jgit-source</artifactId>
+        <version>${version.nisse}</version>
       </dependency>
 
       <!-- Logging (except API, runtime only) -->

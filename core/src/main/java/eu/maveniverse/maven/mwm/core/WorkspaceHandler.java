@@ -9,23 +9,27 @@ package eu.maveniverse.maven.mwm.core;
 
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Optional;
 
 /**
- * Maven Workspace.
+ * Maven Workspace handler.
  */
-public interface Workspace {
+public interface WorkspaceHandler {
     /**
-     * The ID of the workspace.
+     * Nisse key for remote name.
      */
-    String workspaceId();
+    String KEY_REMOTE_NAME = "nisse.jgit.remoteName";
+    /**
+     * Nisse key for remote URL.
+     */
+    String KEY_REMOTE_URL = "nisse.jgit.remoteUrl";
+    /**
+     * Nisse key for branch name,
+     */
+    String KEY_BRANCH_NAME = "nisse.jgit.branchName";
 
     /**
-     * The workspace properties.
+     * Detects and may create a workspace handle.
      */
-    Map<String, String> properties();
-
-    /**
-     * The location of the build output directory.
-     */
-    Path buildOutputDirectory();
+    Optional<Workspace> detectWorkspace(Path rootDirectory, Path localRepository, Map<String, String> properties);
 }
