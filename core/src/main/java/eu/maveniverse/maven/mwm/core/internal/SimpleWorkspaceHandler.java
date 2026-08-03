@@ -5,7 +5,7 @@
  * which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  */
-package eu.maveniverse.maven.mwm.core.simple;
+package eu.maveniverse.maven.mwm.core.internal;
 
 import static java.util.Objects.requireNonNull;
 
