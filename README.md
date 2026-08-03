@@ -5,6 +5,14 @@ It is designed to help user cope with "workspaces". It supports git worktrees al
 
 If MWM detects any advanced usage like "chained" LRM, it will stand aside and not interfere.
 
+The idea: as workspace is dynamically detected, MWM will "follow" your work, and in case of branch change, it will
+**automatically switch to new workspace**. This implies that a `mvn install` upon a branch change is needed, otherwise
+if you reduce you build (like using `mvn -f ...` or `-rf :...`) your build will not find the dependencies.
+
+When using this extension, best is to start with _empty local repository_. Your local repository will turn into "cache only"
+and the workspace will be used as build output directory (where project is "installed"). This, combined with Mimir
+makes full experience.
+
 In simplest case, MWM will inspect the checkout (only `git` supported for now) and using Nisse Core (if Nisse 
 extension is present, it will reuse its results) will try to figure out the workspace.
 
@@ -34,6 +42,8 @@ To use it, add the following to your project or user-wide `extensions.xml`:
     </extension>
 </extensions>
 ```
+
+To try it out, one can use `mvn mwn:status` goal (full coordinates of mojo is `eu.maveniverse.maven.plugins:mwm-plugin3:status`).
 
 * Requirements:
 * Java: 8+
