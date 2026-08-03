@@ -26,6 +26,16 @@
   <dependencies>
     <!-- Nisse -->
     <dependency>
+      <groupId>eu.maveniverse.maven.nisse</groupId>
+      <artifactId>core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>eu.maveniverse.maven.nisse.sources</groupId>
+      <artifactId>jgit-source</artifactId>
+    </dependency>
+
+    <!-- Core -->
+    <dependency>
       <groupId>eu.maveniverse.maven.mwm</groupId>
       <artifactId>core</artifactId>
       <exclusions>
@@ -50,19 +60,21 @@
     <dependency>
       <groupId>org.apache.maven.plugin-tools</groupId>
       <artifactId>maven-plugin-annotations</artifactId>
-      <version>${version.maven-plugin-tools}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-plugin-api</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-core</artifactId>
-      <version>${maven3Version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-model</artifactId>
-      <version>${maven3Version}</version>
       <scope>provided</scope>
     </dependency>
 

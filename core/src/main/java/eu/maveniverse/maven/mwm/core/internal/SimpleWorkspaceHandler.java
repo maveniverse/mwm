@@ -56,6 +56,7 @@ public final class SimpleWorkspaceHandler implements WorkspaceHandler {
             props.put(KEY_REMOTE_URL, remoteUrl);
             props.put(KEY_BRANCH_NAME, branchName);
             props.put("workspaceId", workspaceId);
+            props.put("handler", NAME);
             props.put("rootDirectory", rootDirectory.toString());
             props.put("buildOutputPath", buildOutputPath.toString());
             return Optional.of(new SimpleWorkspace(workspaceId, this, props, buildOutputPath));

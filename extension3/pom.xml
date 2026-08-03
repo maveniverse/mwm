@@ -32,6 +32,7 @@
       <artifactId>jgit-source</artifactId>
     </dependency>
 
+    <!-- Core -->
     <dependency>
       <groupId>eu.maveniverse.maven.mwm</groupId>
       <artifactId>core</artifactId>
@@ -57,37 +58,31 @@
     <dependency>
       <groupId>org.apache.maven.resolver</groupId>
       <artifactId>maven-resolver-api</artifactId>
-      <version>${maven3ResolverVersion}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.maven.resolver</groupId>
       <artifactId>maven-resolver-util</artifactId>
-      <version>${maven3ResolverVersion}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-core</artifactId>
-      <version>${maven3Version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-embedder</artifactId>
-      <version>${maven3Version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-model</artifactId>
-      <version>${maven3Version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-model-builder</artifactId>
-      <version>${maven3Version}</version>
       <scope>provided</scope>
     </dependency>
 
