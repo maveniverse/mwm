@@ -9,6 +9,35 @@ The idea: as workspace is dynamically detected, MWM will "follow" your work, and
 **automatically switch to new workspace**. This implies that a `mvn install` upon a branch change is needed, otherwise
 if you reduce you build (like using `mvn -f ...` or `-rf :...`) your build will not find the dependencies.
 
+## Use cases
+
+The gist of MWM is to allow branched development without the hassle. Imagine working on Maven all 4 
+active branches (master, 4.0, 3.10 and 3.9, as of today). Today, when you switch a branch 
+(or build in other directory in case of git worktree checkout), you must ensure local repository 
+contains locally built artifacts from current branch. Basically, a common "reflex" today is to 
+build full reactor AFTER branch (or directory) switch `mvn install`. But with MWM, this becomes not needed:
+
+* on branch switch, the "workspace" changes (automatically) as well
+* still, you must ensure that workspace is populated, (on first use) you do must perform full reactor install
+* from this moment, you can freely "jump" from branch to branch and never get compile errors (for example, in one branch you added a method to interface, and have compilation failure on another branch, due lack of it).
+
+Future steps: share workspaces across multiple projects. Here is an:
+
+* given MWM knows the git URL (host+owner+repositoer name) and the current branch
+* ignore the repository name in minting WS ID
+* identify the branch only
+* so WS ID becomes "$owner+branch" function, in example of Maven, it could be `apache-master`
+
+This would result in similar setup as ASF Maven CI has: across multiple (apache) projects, IF you use 
+consistently same branch name (ie feature spanning across multiple checkouts), you COULD share 
+same workspace, providing you same features as above. Hence, similar as above, but spanning across multiple projects/checkouts.
+
+Another example: MWM (is not yet) could be `localPrefix` provider for split local repository use cases as explained in 
+[Local Repository Use Cases](https://maven.apache.org/resolver/local-repository.html#Use_Cases). This would make 
+the "switch" happen automatically, while today, user has to proactively provide `localPrefix` by himself.
+
+## Using it
+
 When using this extension, best is to start with _empty local repository_. Your local repository will turn into "cache only"
 and the workspace will be used as build output directory (where project is "installed"). This, combined with Mimir
 makes full experience.
