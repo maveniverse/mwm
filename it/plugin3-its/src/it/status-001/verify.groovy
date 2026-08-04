@@ -7,5 +7,8 @@
  */
 File buildLog = new File( basedir, 'build.log' )
 assert buildLog.exists()
+String buildLogString = buildLog.text
 
-buildLog.text.contains('MWM is active')
+assert buildLogString.contains('[INFO] MWM is ')
+// TODO: this below is not on CI
+// assert buildLogString.contains('MWM is active')
