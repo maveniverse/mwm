@@ -9,6 +9,10 @@ File buildLog = new File( basedir, 'build.log' )
 assert buildLog.exists()
 String buildLogString = buildLog.text
 
-assert buildLogString.contains('[INFO] MWM ')
-// TODO: this below is not on CI
-// assert buildLogString.contains('Using MWM workspace: ')
+// extension3 only activates on Maven 3.x (interface at o.a.m.internal, relocated in Maven 4)
+if (!buildLogString.contains('Apache Maven 4.')) {
+    assert buildLogString.contains('[INFO] MWM ')
+    // TODO: this below is not on CI
+    // assert buildLogString.contains('Using MWM workspace: ')
+}
+// On Maven 4, extension3 is expected to be inactive — Sisu silently skips it
