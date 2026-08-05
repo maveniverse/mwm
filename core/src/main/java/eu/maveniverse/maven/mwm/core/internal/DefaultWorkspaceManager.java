@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 @Singleton
 @Named
 public class DefaultWorkspaceManager implements WorkspaceManager {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final NisseManager nisseManager;
     private final Map<String, WorkspaceHandler> workspaceHandlers;
 
@@ -42,8 +43,6 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
     @Override
     public Optional<Workspace> detectWorkspace(
             Path rootDirectory, Path localRepository, Map<String, String> properties) {
-        // late create; https://github.com/apache/maven/issues/12668
-        final Logger logger = LoggerFactory.getLogger(getClass());
         HashMap<String, String> props = new HashMap<>(properties);
         if (!props.containsKey(WorkspaceHandler.KEY_REMOTE_NAME)
                 || !props.containsKey(WorkspaceHandler.KEY_REMOTE_URL)

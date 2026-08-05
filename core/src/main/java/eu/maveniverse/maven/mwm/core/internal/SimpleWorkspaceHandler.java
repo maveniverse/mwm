@@ -32,12 +32,11 @@ import org.slf4j.LoggerFactory;
 public final class SimpleWorkspaceHandler implements WorkspaceHandler {
     public static final String NAME = "simple";
 
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+
     @Override
     public Optional<Workspace> detectWorkspace(
             Path rootDirectory, Path localRepository, Map<String, String> properties) {
-        // late create; https://github.com/apache/maven/issues/12668
-        final Logger logger = LoggerFactory.getLogger(getClass());
-
         String remoteName = properties.get(KEY_REMOTE_NAME);
         String remoteUrl = properties.get(KEY_REMOTE_URL);
         String branchName = properties.get(KEY_BRANCH_NAME);
