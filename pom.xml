@@ -75,7 +75,7 @@
     <version.slf4j>2.0.18</version.slf4j>
     <version.sisu>1.1.0</version.sisu>
     <version.maveniverseShared>0.2.6</version.maveniverseShared>
-    <version.nisse>0.9.4</version.nisse>
+    <version.nisse>0.9.5</version.nisse>
   </properties>
 
   <dependencyManagement>
