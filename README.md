@@ -1,6 +1,6 @@
 # Maveniverse MWM
 
-Maveninverse "Maven Workspace Manager" (MWM) is Maven core extension, targeting **exclusively Maven 3.9+** and Java 8+.
+Maveninverse "Maven Workspace Manager" (MWM) is Maven core extension, targeting **exclusively Maven 3.10+** and Java 8+.
 It is designed to help user cope with "workspaces". It supports git worktrees also, builds upon [Nisse JGit](https://github.com/maveniverse/nisse) capabilities,
 but does not force users to explicitly use Nisse extension.
 
@@ -56,12 +56,11 @@ Example workspace IDs:
 * `origin-github.com-maveniverse-mwm-main` when using forked repository against https://github.com/maveniverse/mwm/tree/main branch (no fork).
 
 On Maven 3.10+, the workspace ID is used to derive workspace output directory, which is by default: `$MAVEN_LOCAL_REPOSITORY/.mwm/$workspaceId`.
-On Maven 3.9 the workspace ID is used as "local prefix" supplier, and should be used in combination with "split local repository".
 
 MWM _assumes user performs regular repository hygiene of deleting local repository_. Or even better, as this core
 extension is 3.9+, user may use Mimir as well in combination.
 
-To use it, add the following to your project or user-wide (3.10+) `extensions.xml`:
+To use it, add the following to your project or user-wide (3.10+ feature) `extensions.xml`:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
