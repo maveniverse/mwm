@@ -73,7 +73,7 @@
 
     <version.sisu>1.1.0</version.sisu>
     <version.maveniverseShared>0.2.6</version.maveniverseShared>
-    <version.nisse>0.9.5</version.nisse>
+    <version.nisse>0.9.7</version.nisse>
 
     <!-- Maven + Resolver versions  -->
     <version.maven39>3.9.16</version.maven39>
