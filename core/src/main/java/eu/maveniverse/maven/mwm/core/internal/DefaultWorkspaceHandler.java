@@ -55,24 +55,10 @@ public final class DefaultWorkspaceHandler implements WorkspaceHandler {
                             .replaceAll("[:/]", "-") + "-" + branchName;
             logger.debug("WS {}", workspaceId);
 
-            final Path buildCacheDirectory;
-            final Path buildOutputDirectory;
-            if (config.getBuildCacheScope() == Config.Scope.PROJECT) {
-                buildCacheDirectory = projectDirectory.resolve(".mvn-local").resolve("cache");
-            } else if (config.getBuildCacheScope() == Config.Scope.USER) {
-                buildCacheDirectory = localRepository.resolve("cache");
-            } else {
-                throw new IllegalArgumentException(
-                        "Invalid build cache scope provided: " + config.getBuildCacheScope());
-            }
-            if (config.getBuildOutputScope() == Config.Scope.PROJECT) {
-                buildOutputDirectory = projectDirectory.resolve(".mvn-local").resolve("installed");
-            } else if (config.getBuildOutputScope() == Config.Scope.USER) {
-                buildOutputDirectory = localRepository.resolve("build").resolve(workspaceId);
-            } else {
-                throw new IllegalArgumentException(
-                        "Invalid build output scope provided: " + config.getBuildCacheScope());
-            }
+            final Path buildCacheDirectory =
+                    resolve(config.getBuildCacheScope(), "cache", projectDirectory, localRepository);
+            final Path buildOutputDirectory =
+                    resolve(config.getBuildOutputScope(), "build", projectDirectory, localRepository);
 
             HashMap<String, String> props = new HashMap<>();
             props.put("git.remoteName", remoteName);
@@ -81,10 +67,22 @@ public final class DefaultWorkspaceHandler implements WorkspaceHandler {
             props.put("workspaceId", workspaceId);
             props.put("handler", NAME);
             props.put("rootDirectory", projectDirectory.toString());
+            props.put("buildCacheDirectory", buildCacheDirectory.toString());
+            props.put("buildOutputDirectory", buildOutputDirectory.toString());
             return Optional.of(new DefaultWorkspace(
                     workspaceId, this, props, buildCacheDirectory, buildOutputDirectory, Collections.emptyList()));
         }
         return Optional.empty();
+    }
+
+    private Path resolve(Config.Scope scope, String designator, Path projectDirectory, Path localRepository) {
+        if (scope == Config.Scope.PROJECT) {
+            return projectDirectory.resolve(".mvn-local").resolve(designator);
+        } else if (scope == Config.Scope.USER) {
+            return localRepository.resolve(designator);
+        } else {
+            throw new IllegalArgumentException("Invalid build cache scope provided: " + scope);
+        }
     }
 
     private Config config(Map<String, String> properties) {
