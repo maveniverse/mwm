@@ -43,17 +43,25 @@ public class StatusMojo extends AbstractMojo {
                 }
             });
 
-            Optional<Workspace> wo = workspaceManager.detectWorkspace(
-                    mavenSession.getRequest().getMultiModuleProjectDirectory().toPath(),
-                    mavenSession
-                            .getRepositorySession()
-                            .getLocalRepository()
-                            .getBasedir()
-                            .toPath(),
-                    configProperties);
-            if (wo.isPresent()) {
-                Workspace workspace = wo.get();
-
+            Workspace workspace =
+                    (Workspace) mavenSession.getRepositorySession().getData().get(Workspace.class);
+            if (workspace == null) {
+                Optional<Workspace> wo = workspaceManager.detectWorkspace(
+                        mavenSession
+                                .getRequest()
+                                .getMultiModuleProjectDirectory()
+                                .toPath(),
+                        mavenSession
+                                .getRepositorySession()
+                                .getLocalRepository()
+                                .getBasedir()
+                                .toPath(),
+                        configProperties);
+                if (wo.isPresent()) {
+                    workspace = wo.orElseThrow(() -> new MojoExecutionException("Workspace not found"));
+                }
+            }
+            if (workspace != null) {
                 logger.info("MWM is active");
                 logger.info("=============");
                 logger.info("WS ID      = {}", workspace.workspaceId());

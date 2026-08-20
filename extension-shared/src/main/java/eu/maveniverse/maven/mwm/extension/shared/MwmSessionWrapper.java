@@ -59,6 +59,9 @@ public final class MwmSessionWrapper {
                 return Optional.empty();
             }
 
+            // share data with proto
+            builder.setSessionDataSupplier(protoSession::getData);
+
             Path localRepository = protoSession.getLocalRepository().getBasePath();
             Map<String, String> configProperties = new HashMap<>();
             protoSession.getConfigProperties().forEach((key, value) -> {
@@ -70,6 +73,8 @@ public final class MwmSessionWrapper {
                     .detectWorkspace(projectRoot, localRepository, configProperties)
                     .orElse(null);
             if (workspace != null) {
+                // proto session shares data with "real" one
+                protoSession.getData().set(Workspace.class, workspace);
                 logger.info("Using MWM workspace: {}", workspace.workspaceId());
                 LocalRepositoryManager head = repositorySystem.newLocalRepositoryManager(
                         protoSession, new LocalRepository(workspace.buildCacheDirectory()));

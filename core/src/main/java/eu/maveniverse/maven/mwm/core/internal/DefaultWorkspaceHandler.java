@@ -10,11 +10,14 @@ package eu.maveniverse.maven.mwm.core.internal;
 import eu.maveniverse.maven.mwm.core.Config;
 import eu.maveniverse.maven.mwm.core.Workspace;
 import eu.maveniverse.maven.mwm.core.WorkspaceHandler;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import org.slf4j.Logger;
@@ -38,7 +41,10 @@ public final class DefaultWorkspaceHandler implements WorkspaceHandler {
 
     @Override
     public Optional<Workspace> detectWorkspace(
-            Path projectDirectory, Path localRepository, Map<String, String> properties) {
+            Path projectDirectory,
+            Path localRepository,
+            Map<String, String> properties,
+            Function<Path, Optional<Workspace>> workspaceDetector) {
         final Config config = config(properties);
         final String remoteName = properties.get(DefaultWorkspaceManager.KEY_REMOTE_NAME);
         final String remoteUrl = properties.get(DefaultWorkspaceManager.KEY_REMOTE_URL);
@@ -69,8 +75,17 @@ public final class DefaultWorkspaceHandler implements WorkspaceHandler {
             props.put("rootDirectory", projectDirectory.toString());
             props.put("buildCacheDirectory", buildCacheDirectory.toString());
             props.put("buildOutputDirectory", buildOutputDirectory.toString());
+            ArrayList<Workspace> linkedWorkspaces = new ArrayList<>();
+            if (config.isWorktreeJoined() && commonDir != null) {
+                Path commonProjectDir = Paths.get(commonDir);
+                if (Files.isDirectory(commonProjectDir)
+                        && commonProjectDir.getParent() != null
+                        && Files.isDirectory(commonProjectDir.getParent())) {
+                    workspaceDetector.apply(commonProjectDir.getParent()).ifPresent(linkedWorkspaces::add);
+                }
+            }
             return Optional.of(new DefaultWorkspace(
-                    workspaceId, this, props, buildCacheDirectory, buildOutputDirectory, Collections.emptyList()));
+                    workspaceId, this, props, buildCacheDirectory, buildOutputDirectory, linkedWorkspaces));
         }
         return Optional.empty();
     }

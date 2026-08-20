@@ -10,6 +10,7 @@ package eu.maveniverse.maven.mwm.core;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * Maven Workspace handler.
@@ -18,5 +19,9 @@ public interface WorkspaceHandler {
     /**
      * Detects and may create a workspace handle.
      */
-    Optional<Workspace> detectWorkspace(Path projectDirectory, Path localRepository, Map<String, String> properties);
+    Optional<Workspace> detectWorkspace(
+            Path projectDirectory,
+            Path localRepository,
+            Map<String, String> properties,
+            Function<Path, Optional<Workspace>> workspaceDetector);
 }

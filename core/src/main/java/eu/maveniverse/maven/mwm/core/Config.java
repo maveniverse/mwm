@@ -26,7 +26,7 @@ public interface Config {
      * etc., feature branches are created against these, and not against {@code main} or {@code master}.
      */
     default boolean isWorktreeJoined() {
-        return false;
+        return true;
     }
 
     /**

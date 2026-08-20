@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -50,6 +51,40 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
     @Override
     public Optional<Workspace> detectWorkspace(
             Path projectDirectory, Path localRepository, Map<String, String> properties) {
+        Optional<Map<String, String>> propsOptional = properties(properties, projectDirectory);
+        if (propsOptional.isPresent()) {
+            Map<String, String> props = propsOptional.orElse(Collections.emptyMap());
+            for (Map.Entry<String, WorkspaceHandler> entry : workspaceHandlers.entrySet()) {
+                Optional<Workspace> wo = entry.getValue()
+                        .detectWorkspace(
+                                projectDirectory,
+                                localRepository,
+                                props,
+                                workspaceDetector(localRepository, properties));
+                if (wo.isPresent()) {
+                    logger.debug("Workspace detected by handler: {}", entry.getKey());
+                    return wo;
+                }
+            }
+        }
+        logger.debug("No workspace detected by any handler");
+        return Optional.empty();
+    }
+
+    private Function<Path, Optional<Workspace>> workspaceDetector(
+            Path localRepository, Map<String, String> properties) {
+        // to force Nisse for another directory
+        HashMap<String, String> dp = new HashMap<>(properties);
+        dp.remove(KEY_REMOTE_NAME);
+        dp.remove(KEY_REMOTE_URL);
+        dp.remove(KEY_BRANCH_NAME);
+        return p -> this.detectWorkspace(p, localRepository, dp);
+    }
+
+    /**
+     * Populates provided properties with nisse properties if needed.
+     */
+    private Optional<Map<String, String>> properties(Map<String, String> properties, Path projectDirectory) {
         HashMap<String, String> props = new HashMap<>(properties);
         if (!props.containsKey(KEY_REMOTE_NAME)
                 || !props.containsKey(KEY_REMOTE_URL)
@@ -63,15 +98,7 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
             logger.info("Nisse properties absent after running Nisse; bailing out");
             return Optional.empty();
         }
-        for (Map.Entry<String, WorkspaceHandler> entry : workspaceHandlers.entrySet()) {
-            Optional<Workspace> wo = entry.getValue().detectWorkspace(projectDirectory, localRepository, props);
-            if (wo.isPresent()) {
-                logger.debug("Workspace detected by handler: {}", entry.getKey());
-                return wo;
-            }
-        }
-        logger.debug("No workspace detected by any handler");
-        return Optional.empty();
+        return Optional.of(props);
     }
 
     /**
