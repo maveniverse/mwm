@@ -17,28 +17,72 @@
     <version>0.1.1-SNAPSHOT</version>
   </parent>
 
-  <artifactId>extension3</artifactId>
+  <artifactId>extension4.0</artifactId>
 
   <name>${project.groupId}:${project.artifactId}</name>
 
   <dependencies>
+    <!-- Nisse -->
     <dependency>
-      <groupId>eu.maveniverse.maven.mwm</groupId>
-      <artifactId>extension3.9</artifactId>
+      <groupId>eu.maveniverse.maven.nisse</groupId>
+      <artifactId>core</artifactId>
     </dependency>
     <dependency>
-      <groupId>eu.maveniverse.maven.mwm</groupId>
-      <artifactId>extension3.10</artifactId>
+      <groupId>eu.maveniverse.maven.nisse.sources</groupId>
+      <artifactId>jgit-source</artifactId>
     </dependency>
+
+    <!-- Core -->
     <dependency>
       <groupId>eu.maveniverse.maven.mwm</groupId>
-      <artifactId>extension4.0</artifactId>
+      <artifactId>core</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>eu.maveniverse.maven.shared</groupId>
+      <artifactId>extension</artifactId>
     </dependency>
 
     <!-- Maven -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.resolver</groupId>
+      <artifactId>maven-resolver-api</artifactId>
+      <version>${version.maven40Resolver}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.resolver</groupId>
+      <artifactId>maven-resolver-util</artifactId>
+      <version>${version.maven40Resolver}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-core</artifactId>
+      <version>${version.maven40}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-model</artifactId>
+      <version>${version.maven40}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-model-builder</artifactId>
+      <version>${version.maven40}</version>
       <scope>provided</scope>
     </dependency>
 

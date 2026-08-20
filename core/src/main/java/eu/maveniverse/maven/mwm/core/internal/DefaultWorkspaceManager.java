@@ -9,6 +9,7 @@ package eu.maveniverse.maven.mwm.core.internal;
 
 import static java.util.Objects.requireNonNull;
 
+import eu.maveniverse.maven.mwm.core.Version;
 import eu.maveniverse.maven.mwm.core.Workspace;
 import eu.maveniverse.maven.mwm.core.WorkspaceHandler;
 import eu.maveniverse.maven.mwm.core.WorkspaceManager;
@@ -38,11 +39,11 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
     public DefaultWorkspaceManager(NisseManager nisseManager, Map<String, WorkspaceHandler> workspaceHandlers) {
         this.nisseManager = requireNonNull(nisseManager);
         this.workspaceHandlers = requireNonNull(workspaceHandlers);
+        logger.info("MWM {} (Resolver {})", Version.version(), Version.resolverVersion());
     }
 
     @Override
-    public Optional<Workspace> detectWorkspace(
-            Path rootDirectory, Path localRepository, Map<String, String> properties) {
+    public Optional<Workspace> detectWorkspace(Path rootDirectory, Map<String, String> properties) {
         HashMap<String, String> props = new HashMap<>(properties);
         if (!props.containsKey(WorkspaceHandler.KEY_REMOTE_NAME)
                 || !props.containsKey(WorkspaceHandler.KEY_REMOTE_URL)
@@ -57,7 +58,7 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
             return Optional.empty();
         }
         for (Map.Entry<String, WorkspaceHandler> entry : workspaceHandlers.entrySet()) {
-            Optional<Workspace> wo = entry.getValue().detectWorkspace(rootDirectory, localRepository, props);
+            Optional<Workspace> wo = entry.getValue().detectWorkspace(rootDirectory, props);
             if (wo.isPresent()) {
                 logger.debug("Workspace detected by handler: {}", entry.getKey());
                 return wo;

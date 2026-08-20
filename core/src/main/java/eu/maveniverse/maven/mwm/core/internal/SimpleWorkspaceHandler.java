@@ -35,8 +35,7 @@ public final class SimpleWorkspaceHandler implements WorkspaceHandler {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Override
-    public Optional<Workspace> detectWorkspace(
-            Path rootDirectory, Path localRepository, Map<String, String> properties) {
+    public Optional<Workspace> detectWorkspace(Path rootDirectory, Map<String, String> properties) {
         String remoteName = properties.get(KEY_REMOTE_NAME);
         String remoteUrl = properties.get(KEY_REMOTE_URL);
         String branchName = properties.get(KEY_BRANCH_NAME);
@@ -49,7 +48,6 @@ public final class SimpleWorkspaceHandler implements WorkspaceHandler {
                             .replaceFirst("\\.git$", "")
                             .replaceAll("[:/]", "-") + "-" + branchName;
             logger.debug("WS {}", workspaceId);
-            Path buildOutputPath = localRepository.resolve(".mwn").resolve(workspaceId);
             HashMap<String, String> props = new HashMap<>();
             props.put(KEY_REMOTE_NAME, remoteName);
             props.put(KEY_REMOTE_URL, remoteUrl);
@@ -57,8 +55,7 @@ public final class SimpleWorkspaceHandler implements WorkspaceHandler {
             props.put("workspaceId", workspaceId);
             props.put("handler", NAME);
             props.put("rootDirectory", rootDirectory.toString());
-            props.put("buildOutputPath", buildOutputPath.toString());
-            return Optional.of(new SimpleWorkspace(workspaceId, this, props, buildOutputPath));
+            return Optional.of(new SimpleWorkspace(workspaceId, this, props));
         }
         return Optional.empty();
     }

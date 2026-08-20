@@ -5,13 +5,13 @@
  * which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  */
-package eu.maveniverse.maven.mwm.extension3.internal;
+package eu.maveniverse.maven.mwm.extension310.internal;
 
 import static java.util.Objects.requireNonNull;
 
-import eu.maveniverse.maven.mwm.core.Version;
 import eu.maveniverse.maven.mwm.core.Workspace;
 import eu.maveniverse.maven.mwm.core.WorkspaceManager;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -53,7 +53,6 @@ final class MwmRepositorySystemSessionFactory implements RepositorySystemSession
     @Override
     public RepositorySystemSession.SessionBuilder newRepositorySessionBuilder(
             MavenExecutionRequest mavenExecutionRequest) {
-        logger.info("MWM {}", Version.version());
         return defaultFactory
                 .newRepositorySessionBuilder(mavenExecutionRequest)
                 .setLocalRepositoryManager(newLocalRepositoryManager(
@@ -75,17 +74,18 @@ final class MwmRepositorySystemSessionFactory implements RepositorySystemSession
                 }
             });
             Workspace workspace = workspaceManager
-                    .detectWorkspace(
-                            mavenExecutionRequest.getRootDirectory(),
-                            session.getLocalRepositoryManager().getRepository().getBasePath(),
-                            configProperties)
+                    .detectWorkspace(mavenExecutionRequest.getRootDirectory(), configProperties)
                     .orElse(null);
             if (workspace != null) {
                 logger.info("Using MWM workspace: {}", workspace.workspaceId());
+                Path buildOutputDirectory = session.getLocalRepository()
+                        .getBasePath()
+                        .resolve(".mwn")
+                        .resolve(workspace.workspaceId());
                 return new ChainedLocalRepositoryManager(
                         session.getLocalRepositoryManager(),
                         Collections.singletonList(repositorySystem.newLocalRepositoryManager(
-                                session, new LocalRepository(workspace.buildOutputDirectory()))),
+                                session, new LocalRepository(buildOutputDirectory))),
                         false,
                         1,
                         0);
