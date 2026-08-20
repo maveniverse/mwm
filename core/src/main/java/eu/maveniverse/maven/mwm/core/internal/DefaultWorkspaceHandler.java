@@ -33,10 +33,8 @@ import org.slf4j.LoggerFactory;
  * All properties must be present. And based on them, "comes up" with some workspace.
  */
 @Singleton
-@Named(DefaultWorkspaceHandler.NAME)
+@Named
 public final class DefaultWorkspaceHandler implements WorkspaceHandler {
-    public static final String NAME = "simple";
-
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Override
@@ -71,7 +69,7 @@ public final class DefaultWorkspaceHandler implements WorkspaceHandler {
             props.put("git.remoteUrl", remoteUrl);
             props.put("git.branchName", branchName);
             props.put("workspaceId", workspaceId);
-            props.put("handler", NAME);
+            props.put("handler", getClass().getSimpleName());
             props.put("rootDirectory", projectDirectory.toString());
             props.put("buildCacheDirectory", buildCacheDirectory.toString());
             props.put("buildOutputDirectory", buildOutputDirectory.toString());
@@ -84,6 +82,7 @@ public final class DefaultWorkspaceHandler implements WorkspaceHandler {
                     workspaceDetector.apply(commonProjectDir.getParent()).ifPresent(linkedWorkspaces::add);
                 }
             }
+            // TODO: config for linked workspaces
             return Optional.of(new DefaultWorkspace(
                     workspaceId, this, props, buildCacheDirectory, buildOutputDirectory, linkedWorkspaces));
         }
