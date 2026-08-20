@@ -10,6 +10,7 @@ package eu.maveniverse.maven.mwm.core.internal;
 import eu.maveniverse.maven.mwm.core.Workspace;
 import eu.maveniverse.maven.mwm.core.WorkspaceHandler;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -56,7 +57,8 @@ public final class SimpleWorkspaceHandler implements WorkspaceHandler {
             props.put("workspaceId", workspaceId);
             props.put("handler", NAME);
             props.put("rootDirectory", projectDirectory.toString());
-            return Optional.of(new SimpleWorkspace(workspaceId, this, props, projectDirectory, localRepository));
+            return Optional.of(new SimpleWorkspace(
+                    workspaceId, this, props, projectDirectory, localRepository, Collections.emptyList()));
         }
         return Optional.empty();
     }

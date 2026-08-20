@@ -8,6 +8,7 @@
 package eu.maveniverse.maven.mwm.core;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -38,4 +39,9 @@ public interface Workspace {
      * The location of the build output directory.
      */
     Path buildOutputDirectory();
+
+    /**
+     * The list of linked workspaces.
+     */
+    List<Workspace> linkedWorkspaces();
 }

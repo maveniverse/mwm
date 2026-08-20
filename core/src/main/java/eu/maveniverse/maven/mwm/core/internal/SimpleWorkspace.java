@@ -12,6 +12,7 @@ import static java.util.Objects.requireNonNull;
 import eu.maveniverse.maven.mwm.core.Workspace;
 import eu.maveniverse.maven.mwm.core.WorkspaceHandler;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
 public final class SimpleWorkspace implements Workspace {
@@ -20,18 +21,21 @@ public final class SimpleWorkspace implements Workspace {
     private final Map<String, String> properties;
     private final Path buildCacheDirectory;
     private final Path buildOutputDirectory;
+    private final List<Workspace> linkedWorkspaces;
 
     public SimpleWorkspace(
             String workspaceId,
             WorkspaceHandler workspaceHandler,
             Map<String, String> properties,
             Path buildCacheDirectory,
-            Path buildOutputDirectory) {
+            Path buildOutputDirectory,
+            List<Workspace> linkedWorkspaces) {
         this.workspaceId = requireNonNull(workspaceId);
         this.workspaceHandler = requireNonNull(workspaceHandler);
         this.properties = requireNonNull(properties);
         this.buildCacheDirectory = requireNonNull(buildCacheDirectory);
         this.buildOutputDirectory = requireNonNull(buildOutputDirectory);
+        this.linkedWorkspaces = requireNonNull(linkedWorkspaces);
     }
 
     @Override
@@ -57,5 +61,10 @@ public final class SimpleWorkspace implements Workspace {
     @Override
     public Path buildOutputDirectory() {
         return buildOutputDirectory;
+    }
+
+    @Override
+    public List<Workspace> linkedWorkspaces() {
+        return linkedWorkspaces;
     }
 }

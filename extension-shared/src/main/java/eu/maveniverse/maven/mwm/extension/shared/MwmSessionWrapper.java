@@ -12,7 +12,7 @@ import static java.util.Objects.requireNonNull;
 import eu.maveniverse.maven.mwm.core.Workspace;
 import eu.maveniverse.maven.mwm.core.WorkspaceManager;
 import java.nio.file.Path;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -71,18 +71,16 @@ public final class MwmSessionWrapper {
                     .orElse(null);
             if (workspace != null) {
                 logger.info("Using MWM workspace: {}", workspace.workspaceId());
-                Path buildOutputDirectory = protoSession
-                        .getLocalRepository()
-                        .getBasePath()
-                        .resolve(".mwn")
-                        .resolve(workspace.workspaceId());
-                return Optional.of(new ChainedLocalRepositoryManager(
-                        protoSession.getLocalRepositoryManager(),
-                        Collections.singletonList(repositorySystem.newLocalRepositoryManager(
-                                protoSession, new LocalRepository(buildOutputDirectory))),
-                        false,
-                        1,
-                        0));
+                LocalRepositoryManager head = repositorySystem.newLocalRepositoryManager(
+                        protoSession, new LocalRepository(workspace.buildCacheDirectory()));
+                ArrayList<LocalRepositoryManager> tail = new ArrayList<>();
+                tail.add(repositorySystem.newLocalRepositoryManager(
+                        protoSession, new LocalRepository(workspace.buildOutputDirectory())));
+                for (Workspace linked : workspace.linkedWorkspaces()) {
+                    tail.add(repositorySystem.newLocalRepositoryManager(
+                            protoSession, new LocalRepository(linked.buildOutputDirectory())));
+                }
+                return Optional.of(new ChainedLocalRepositoryManager(head, tail, false, 1, 0));
             }
 
             return Optional.empty();
