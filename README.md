@@ -58,7 +58,7 @@ Example workspace IDs:
 On Maven 3.10+, the workspace ID is used to derive workspace output directory, which is by default: `$MAVEN_LOCAL_REPOSITORY/.mwm/$workspaceId`.
 
 MWM _assumes user performs regular repository hygiene of deleting local repository_. Or even better, as this core
-extension is 3.9+, user may use Mimir as well in combination.
+extension is 3.10+, user may use Mimir as well in combination.
 
 To use it, add the following to your project or user-wide (3.10+ feature) `extensions.xml`:
 
