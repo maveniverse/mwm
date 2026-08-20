@@ -60,9 +60,9 @@ public final class DefaultWorkspaceHandler implements WorkspaceHandler {
             logger.debug("WS {}", workspaceId);
 
             final Path buildCacheDirectory =
-                    resolve(config.getBuildCacheScope(), "cache", projectDirectory, localRepository);
+                    resolve(config.getBuildCacheScope(), projectDirectory, localRepository, true, workspaceId);
             final Path buildOutputDirectory =
-                    resolve(config.getBuildOutputScope(), "build", projectDirectory, localRepository);
+                    resolve(config.getBuildOutputScope(), projectDirectory, localRepository, false, workspaceId);
 
             HashMap<String, String> props = new HashMap<>();
             props.put("git.remoteName", remoteName);
@@ -89,11 +89,20 @@ public final class DefaultWorkspaceHandler implements WorkspaceHandler {
         return Optional.empty();
     }
 
-    private Path resolve(Config.Scope scope, String designator, Path projectDirectory, Path localRepository) {
+    private Path resolve(
+            Config.Scope scope, Path projectDirectory, Path localRepository, boolean cache, String workspaceId) {
         if (scope == Config.Scope.PROJECT) {
-            return projectDirectory.resolve(".mvn-local").resolve(designator);
+            if (cache) {
+                return projectDirectory.resolve(".mvn-local").resolve("cache");
+            } else {
+                return projectDirectory.resolve(".mvn-local").resolve("build").resolve(workspaceId);
+            }
         } else if (scope == Config.Scope.USER) {
-            return localRepository.resolve(designator);
+            if (cache) {
+                return localRepository;
+            } else {
+                return localRepository.resolve("mwm-workspace").resolve(workspaceId);
+            }
         } else {
             throw new IllegalArgumentException("Invalid build cache scope provided: " + scope);
         }
