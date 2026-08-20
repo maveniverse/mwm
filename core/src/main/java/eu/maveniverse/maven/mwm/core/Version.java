@@ -16,10 +16,17 @@ import java.util.Map;
 import java.util.Properties;
 
 public final class Version {
+    public static final String UNKNOWN = "unknown";
+
     private Version() {}
 
     public static String version() {
-        return loadClasspathProperties("eu.maveniverse.maven.mwm", "core").getOrDefault("version", "<unknown>");
+        return loadClasspathProperties("eu.maveniverse.maven.mwm", "core").getOrDefault("version", UNKNOWN);
+    }
+
+    public static String resolverVersion() {
+        return loadClasspathProperties("org.apache.maven.resolver", "maven-resolver-api")
+                .getOrDefault("version", UNKNOWN);
     }
 
     public static Map<String, String> loadClasspathProperties(String groupId, String artifactId) {

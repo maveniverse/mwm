@@ -8,10 +8,12 @@
     https://www.eclipse.org/legal/epl-v20.html
 
 -->
-<extensions>
-    <extension>
-        <groupId>eu.maveniverse.maven.mwm</groupId>
-        <artifactId>extension</artifactId>
-        <version>@project.version@</version>
-    </extension>
-</extensions>
+<extension>
+  <exportedPackages>
+    <exportedPackage>eu.maveniverse.maven.mwm.core</exportedPackage>
+  </exportedPackages>
+
+  <exportedArtifacts>
+    <exportedArtifact>eu.maveniverse.maven.mwm:core</exportedArtifact>
+  </exportedArtifacts>
+</extension>

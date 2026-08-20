@@ -18,5 +18,5 @@ public interface WorkspaceManager {
     /**
      * Detects and may create a workspace handle.
      */
-    Optional<Workspace> detectWorkspace(Path rootDirectory, Path localRepository, Map<String, String> properties);
+    Optional<Workspace> detectWorkspace(Path projectDirectory, Path localRepository, Map<String, String> properties);
 }

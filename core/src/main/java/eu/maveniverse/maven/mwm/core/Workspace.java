@@ -8,6 +8,7 @@
 package eu.maveniverse.maven.mwm.core;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -30,7 +31,17 @@ public interface Workspace {
     Map<String, String> properties();
 
     /**
+     * The location of the build cache output.
+     */
+    Path buildCacheDirectory();
+
+    /**
      * The location of the build output directory.
      */
     Path buildOutputDirectory();
+
+    /**
+     * The list of linked workspaces.
+     */
+    List<Workspace> linkedWorkspaces();
 }
