@@ -45,7 +45,13 @@ public class StatusMojo extends AbstractMojo {
             });
 
             Optional<Workspace> wo = workspaceManager.detectWorkspace(
-                    mavenSession.getRequest().getMultiModuleProjectDirectory().toPath(), configProperties);
+                    mavenSession.getRequest().getMultiModuleProjectDirectory().toPath(),
+                    mavenSession
+                            .getRepositorySession()
+                            .getLocalRepository()
+                            .getBasedir()
+                            .toPath(),
+                    configProperties);
             if (wo.isPresent()) {
                 Workspace workspace = wo.get();
                 Path buildOutputDirectory = mavenSession

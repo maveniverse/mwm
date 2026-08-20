@@ -11,17 +11,27 @@ import static java.util.Objects.requireNonNull;
 
 import eu.maveniverse.maven.mwm.core.Workspace;
 import eu.maveniverse.maven.mwm.core.WorkspaceHandler;
+import java.nio.file.Path;
 import java.util.Map;
 
 public final class SimpleWorkspace implements Workspace {
     private final String workspaceId;
     private final WorkspaceHandler workspaceHandler;
     private final Map<String, String> properties;
+    private final Path buildCacheDirectory;
+    private final Path buildOutputDirectory;
 
-    public SimpleWorkspace(String workspaceId, WorkspaceHandler workspaceHandler, Map<String, String> properties) {
+    public SimpleWorkspace(
+            String workspaceId,
+            WorkspaceHandler workspaceHandler,
+            Map<String, String> properties,
+            Path buildCacheDirectory,
+            Path buildOutputDirectory) {
         this.workspaceId = requireNonNull(workspaceId);
         this.workspaceHandler = requireNonNull(workspaceHandler);
         this.properties = requireNonNull(properties);
+        this.buildCacheDirectory = requireNonNull(buildCacheDirectory);
+        this.buildOutputDirectory = requireNonNull(buildOutputDirectory);
     }
 
     @Override
@@ -37,5 +47,15 @@ public final class SimpleWorkspace implements Workspace {
     @Override
     public Map<String, String> properties() {
         return properties;
+    }
+
+    @Override
+    public Path buildCacheDirectory() {
+        return buildCacheDirectory;
+    }
+
+    @Override
+    public Path buildOutputDirectory() {
+        return buildOutputDirectory;
     }
 }

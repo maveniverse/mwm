@@ -7,6 +7,7 @@
  */
 package eu.maveniverse.maven.mwm.core;
 
+import java.nio.file.Path;
 import java.util.Map;
 
 /**
@@ -14,7 +15,7 @@ import java.util.Map;
  */
 public interface Workspace {
     /**
-     * The ID of the workspace. It is FS path friendly value.
+     * The ID of the workspace.
      */
     String workspaceId();
 
@@ -27,4 +28,14 @@ public interface Workspace {
      * The workspace properties.
      */
     Map<String, String> properties();
+
+    /**
+     * The location of the build cache output.
+     */
+    Path buildCacheDirectory();
+
+    /**
+     * The location of the build output directory.
+     */
+    Path buildOutputDirectory();
 }

@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -42,42 +43,49 @@ public final class MwmSessionWrapper {
 
     public RepositorySystemSession.SessionBuilder wrap(
             Path projectRoot, RepositorySystemSession.SessionBuilder builder) {
-        return builder.setLocalRepositoryManager(newLocalRepositoryManager(projectRoot, builder));
+        newLocalRepositoryManager(projectRoot, builder).ifPresent(builder::setLocalRepositoryManager);
+        return builder;
     }
 
-    private LocalRepositoryManager newLocalRepositoryManager(
+    private Optional<LocalRepositoryManager> newLocalRepositoryManager(
             Path projectRoot, RepositorySystemSession.SessionBuilder builder) {
-        try (RepositorySystemSession.CloseableSession session = builder.build()) {
-            if (session.getLocalRepositoryManager() instanceof ChainedLocalRepositoryManager) {
+        try (RepositorySystemSession.CloseableSession protoSession = builder.build()) {
+            if (protoSession.getLocalRepositoryManager() instanceof ChainedLocalRepositoryManager) {
                 logger.info("Chained LRM detected; MWM is not interfering with it");
-                return session.getLocalRepositoryManager();
+                return Optional.empty();
+            }
+            if (protoSession.getLocalRepositoryManager() == null) {
+                logger.info("No LRM detected; This session is incomplete with MWM");
+                return Optional.empty();
             }
 
+            Path localRepository = protoSession.getLocalRepository().getBasePath();
             Map<String, String> configProperties = new HashMap<>();
-            session.getConfigProperties().forEach((key, value) -> {
+            protoSession.getConfigProperties().forEach((key, value) -> {
                 if (value instanceof String) {
                     configProperties.put(key, (String) value);
                 }
             });
             Workspace workspace = workspaceManager
-                    .detectWorkspace(projectRoot, configProperties)
+                    .detectWorkspace(projectRoot, localRepository, configProperties)
                     .orElse(null);
             if (workspace != null) {
                 logger.info("Using MWM workspace: {}", workspace.workspaceId());
-                Path buildOutputDirectory = session.getLocalRepository()
+                Path buildOutputDirectory = protoSession
+                        .getLocalRepository()
                         .getBasePath()
                         .resolve(".mwn")
                         .resolve(workspace.workspaceId());
-                return new ChainedLocalRepositoryManager(
-                        session.getLocalRepositoryManager(),
+                return Optional.of(new ChainedLocalRepositoryManager(
+                        protoSession.getLocalRepositoryManager(),
                         Collections.singletonList(repositorySystem.newLocalRepositoryManager(
-                                session, new LocalRepository(buildOutputDirectory))),
+                                protoSession, new LocalRepository(buildOutputDirectory))),
                         false,
                         1,
-                        0);
+                        0));
             }
 
-            return session.getLocalRepositoryManager();
+            return Optional.empty();
         }
     }
 }

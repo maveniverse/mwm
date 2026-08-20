@@ -35,7 +35,8 @@ public final class SimpleWorkspaceHandler implements WorkspaceHandler {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Override
-    public Optional<Workspace> detectWorkspace(Path rootDirectory, Map<String, String> properties) {
+    public Optional<Workspace> detectWorkspace(
+            Path projectDirectory, Path localRepository, Map<String, String> properties) {
         String remoteName = properties.get(KEY_REMOTE_NAME);
         String remoteUrl = properties.get(KEY_REMOTE_URL);
         String branchName = properties.get(KEY_BRANCH_NAME);
@@ -54,8 +55,8 @@ public final class SimpleWorkspaceHandler implements WorkspaceHandler {
             props.put(KEY_BRANCH_NAME, branchName);
             props.put("workspaceId", workspaceId);
             props.put("handler", NAME);
-            props.put("rootDirectory", rootDirectory.toString());
-            return Optional.of(new SimpleWorkspace(workspaceId, this, props));
+            props.put("rootDirectory", projectDirectory.toString());
+            return Optional.of(new SimpleWorkspace(workspaceId, this, props, projectDirectory, localRepository));
         }
         return Optional.empty();
     }

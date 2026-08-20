@@ -43,13 +43,14 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
     }
 
     @Override
-    public Optional<Workspace> detectWorkspace(Path rootDirectory, Map<String, String> properties) {
+    public Optional<Workspace> detectWorkspace(
+            Path projectDirectory, Path localRepository, Map<String, String> properties) {
         HashMap<String, String> props = new HashMap<>(properties);
         if (!props.containsKey(WorkspaceHandler.KEY_REMOTE_NAME)
                 || !props.containsKey(WorkspaceHandler.KEY_REMOTE_URL)
                 || !props.containsKey(WorkspaceHandler.KEY_BRANCH_NAME)) {
             logger.debug("Nisse properties absent; running Nisse");
-            props.putAll(nisseProperties(rootDirectory, props));
+            props.putAll(nisseProperties(projectDirectory, props));
         }
         if (!props.containsKey(WorkspaceHandler.KEY_REMOTE_NAME)
                 || !props.containsKey(WorkspaceHandler.KEY_REMOTE_URL)
@@ -58,7 +59,7 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
             return Optional.empty();
         }
         for (Map.Entry<String, WorkspaceHandler> entry : workspaceHandlers.entrySet()) {
-            Optional<Workspace> wo = entry.getValue().detectWorkspace(rootDirectory, props);
+            Optional<Workspace> wo = entry.getValue().detectWorkspace(projectDirectory, localRepository, props);
             if (wo.isPresent()) {
                 logger.debug("Workspace detected by handler: {}", entry.getKey());
                 return wo;
