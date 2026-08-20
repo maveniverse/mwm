@@ -43,6 +43,10 @@
         </exclusion>
       </exclusions>
     </dependency>
+    <dependency>
+      <groupId>eu.maveniverse.maven.mwm</groupId>
+      <artifactId>extension-shared</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>eu.maveniverse.maven.shared</groupId>

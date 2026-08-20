@@ -36,11 +36,11 @@
 
   <modules>
     <module>core</module>
-    <module>extension3.9</module>
+    <module>extension-shared</module>
     <module>extension3.10</module>
     <module>extension4.0</module>
-    <module>extension3</module>
-    <module>plugin3</module>
+    <module>extension</module>
+    <module>mwm-plugin3</module>
     <module>it</module>
   </modules>
 
@@ -69,15 +69,13 @@
     Run time: Maven 3.9+ and latest Java 8 LTS.
     -->
     <maven.compiler.release>8</maven.compiler.release>
-    <requireRuntimeMavenVersion.range>[3.9,)</requireRuntimeMavenVersion.range>
+    <requireRuntimeMavenVersion.range>[3.10.0-rc-1,)</requireRuntimeMavenVersion.range>
 
     <version.sisu>1.1.0</version.sisu>
     <version.maveniverseShared>0.2.6</version.maveniverseShared>
     <version.nisse>0.9.7</version.nisse>
 
     <!-- Maven + Resolver versions  -->
-    <version.maven39>3.9.16</version.maven39>
-    <version.maven39Resolver>1.9.27</version.maven39Resolver>
     <version.maven310>3.10.0-rc-1</version.maven310>
     <version.maven310Resolver>2.0.21</version.maven310Resolver>
     <version.maven40>4.0.0-rc-6</version.maven40>
@@ -98,7 +96,7 @@
       </dependency>
       <dependency>
         <groupId>eu.maveniverse.maven.mwm</groupId>
-        <artifactId>extension3.9</artifactId>
+        <artifactId>extension-shared</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -113,7 +111,7 @@
       </dependency>
       <dependency>
         <groupId>eu.maveniverse.maven.mwm</groupId>
-        <artifactId>extension3</artifactId>
+        <artifactId>extension</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

@@ -25,7 +25,7 @@
   <dependencies>
     <dependency>
       <groupId>eu.maveniverse.maven.mwm</groupId>
-      <artifactId>extension3</artifactId>
+      <artifactId>extension</artifactId>
     </dependency>
   </dependencies>
 

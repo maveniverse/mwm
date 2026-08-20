@@ -11,7 +11,7 @@
 <extensions>
     <extension>
         <groupId>eu.maveniverse.maven.mwm</groupId>
-        <artifactId>extension3</artifactId>
+        <artifactId>extension</artifactId>
         <version>@project.version@</version>
     </extension>
 </extensions>
