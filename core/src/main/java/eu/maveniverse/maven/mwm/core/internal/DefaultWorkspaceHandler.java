@@ -7,6 +7,7 @@
  */
 package eu.maveniverse.maven.mwm.core.internal;
 
+import eu.maveniverse.maven.mwm.core.Config;
 import eu.maveniverse.maven.mwm.core.Workspace;
 import eu.maveniverse.maven.mwm.core.WorkspaceHandler;
 import java.nio.file.Path;
@@ -29,8 +30,8 @@ import org.slf4j.LoggerFactory;
  * All properties must be present. And based on them, "comes up" with some workspace.
  */
 @Singleton
-@Named(SimpleWorkspaceHandler.NAME)
-public final class SimpleWorkspaceHandler implements WorkspaceHandler {
+@Named(DefaultWorkspaceHandler.NAME)
+public final class DefaultWorkspaceHandler implements WorkspaceHandler {
     public static final String NAME = "simple";
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -38,9 +39,12 @@ public final class SimpleWorkspaceHandler implements WorkspaceHandler {
     @Override
     public Optional<Workspace> detectWorkspace(
             Path projectDirectory, Path localRepository, Map<String, String> properties) {
-        String remoteName = properties.get(KEY_REMOTE_NAME);
-        String remoteUrl = properties.get(KEY_REMOTE_URL);
-        String branchName = properties.get(KEY_BRANCH_NAME);
+        final Config config = config(properties);
+        final String remoteName = properties.get(DefaultWorkspaceManager.KEY_REMOTE_NAME);
+        final String remoteUrl = properties.get(DefaultWorkspaceManager.KEY_REMOTE_URL);
+        final String branchName = properties.get(DefaultWorkspaceManager.KEY_BRANCH_NAME);
+        final String commonDir = properties.get(DefaultWorkspaceManager.KEY_COMMON_DIR);
+
         if (remoteName != null && remoteUrl != null && branchName != null) {
             // remoteUrl: git@github.com:maveniverse/mwm.git or https://github.com/example/repo.git
             // we want host + owner (without slashes) + repo
@@ -50,16 +54,40 @@ public final class SimpleWorkspaceHandler implements WorkspaceHandler {
                             .replaceFirst("\\.git$", "")
                             .replaceAll("[:/]", "-") + "-" + branchName;
             logger.debug("WS {}", workspaceId);
+
+            final Path buildCacheDirectory;
+            final Path buildOutputDirectory;
+            if (config.getBuildCacheScope() == Config.Scope.PROJECT) {
+                buildCacheDirectory = projectDirectory.resolve(".mvn-local").resolve("cache");
+            } else if (config.getBuildCacheScope() == Config.Scope.USER) {
+                buildCacheDirectory = localRepository.resolve("cache");
+            } else {
+                throw new IllegalArgumentException(
+                        "Invalid build cache scope provided: " + config.getBuildCacheScope());
+            }
+            if (config.getBuildOutputScope() == Config.Scope.PROJECT) {
+                buildOutputDirectory = projectDirectory.resolve(".mvn-local").resolve("installed");
+            } else if (config.getBuildOutputScope() == Config.Scope.USER) {
+                buildOutputDirectory = localRepository.resolve("build").resolve(workspaceId);
+            } else {
+                throw new IllegalArgumentException(
+                        "Invalid build output scope provided: " + config.getBuildCacheScope());
+            }
+
             HashMap<String, String> props = new HashMap<>();
-            props.put(KEY_REMOTE_NAME, remoteName);
-            props.put(KEY_REMOTE_URL, remoteUrl);
-            props.put(KEY_BRANCH_NAME, branchName);
+            props.put("git.remoteName", remoteName);
+            props.put("git.remoteUrl", remoteUrl);
+            props.put("git.branchName", branchName);
             props.put("workspaceId", workspaceId);
             props.put("handler", NAME);
             props.put("rootDirectory", projectDirectory.toString());
-            return Optional.of(new SimpleWorkspace(
-                    workspaceId, this, props, projectDirectory, localRepository, Collections.emptyList()));
+            return Optional.of(new DefaultWorkspace(
+                    workspaceId, this, props, buildCacheDirectory, buildOutputDirectory, Collections.emptyList()));
         }
         return Optional.empty();
+    }
+
+    private Config config(Map<String, String> properties) {
+        return new Config() {};
     }
 }

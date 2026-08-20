@@ -16,19 +16,6 @@ import java.util.Optional;
  */
 public interface WorkspaceHandler {
     /**
-     * Nisse key for remote name.
-     */
-    String KEY_REMOTE_NAME = "nisse.jgit.remoteName";
-    /**
-     * Nisse key for remote URL.
-     */
-    String KEY_REMOTE_URL = "nisse.jgit.remoteUrl";
-    /**
-     * Nisse key for branch name,
-     */
-    String KEY_BRANCH_NAME = "nisse.jgit.branchName";
-
-    /**
      * Detects and may create a workspace handle.
      */
     Optional<Workspace> detectWorkspace(Path projectDirectory, Path localRepository, Map<String, String> properties);

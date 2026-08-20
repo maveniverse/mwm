@@ -9,7 +9,6 @@ package eu.maveniverse.maven.mwm.plugin3;
 
 import eu.maveniverse.maven.mwm.core.Workspace;
 import eu.maveniverse.maven.mwm.core.WorkspaceManager;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -54,13 +53,6 @@ public class StatusMojo extends AbstractMojo {
                     configProperties);
             if (wo.isPresent()) {
                 Workspace workspace = wo.get();
-                Path buildOutputDirectory = mavenSession
-                        .getRepositorySession()
-                        .getLocalRepository()
-                        .getBasedir()
-                        .toPath()
-                        .resolve(".mwn")
-                        .resolve(workspace.workspaceId());
 
                 logger.info("MWM is active");
                 logger.info("=============");
@@ -68,7 +60,8 @@ public class StatusMojo extends AbstractMojo {
                 logger.info(
                         "WS handler = {}",
                         workspace.workspaceHandler().getClass().getSimpleName());
-                logger.info("WS output  = {}", buildOutputDirectory);
+                logger.info("WS cache  = {}", workspace.buildCacheDirectory());
+                logger.info("WS output  = {}", workspace.buildOutputDirectory());
                 logger.info("-------------");
                 logger.info("Considered properties:");
                 workspace.properties().forEach((key, value) -> logger.info("{} = {}", key, value));

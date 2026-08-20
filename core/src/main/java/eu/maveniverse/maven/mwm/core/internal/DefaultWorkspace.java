@@ -15,7 +15,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
-public final class SimpleWorkspace implements Workspace {
+public final class DefaultWorkspace implements Workspace {
     private final String workspaceId;
     private final WorkspaceHandler workspaceHandler;
     private final Map<String, String> properties;
@@ -23,7 +23,7 @@ public final class SimpleWorkspace implements Workspace {
     private final Path buildOutputDirectory;
     private final List<Workspace> linkedWorkspaces;
 
-    public SimpleWorkspace(
+    public DefaultWorkspace(
             String workspaceId,
             WorkspaceHandler workspaceHandler,
             Map<String, String> properties,
