@@ -13,6 +13,7 @@ import eu.maveniverse.maven.mwm.core.Config;
 import eu.maveniverse.maven.mwm.core.Version;
 import eu.maveniverse.maven.mwm.core.Workspace;
 import eu.maveniverse.maven.mwm.core.WorkspaceManager;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -43,23 +44,23 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
     }
 
     @Override
-    public Collection<Workspace> listAll() {
+    public Collection<Workspace> listAll() throws IOException {
         return Collections.emptyList();
     }
 
     @Override
-    public Optional<Workspace> lookup(String workspaceId) {
+    public Optional<Workspace> lookup(String workspaceId) throws IOException {
         return Optional.empty();
     }
 
     @Override
-    public boolean drop(String workspaceId, boolean purge) {
+    public boolean drop(String workspaceId, boolean purge) throws IOException {
         return false;
     }
 
     @Override
     public Optional<Workspace> detectWorkspace(
-            Path projectDirectory, Path localRepository, Map<String, String> properties) {
+            Path projectDirectory, Path localRepository, Map<String, String> properties) throws IOException {
         Optional<Map<String, String>> propsOptional = propertiesManager.maySeedProperties(projectDirectory, properties);
         if (propsOptional.isPresent()) {
             Map<String, String> props = propsOptional.orElse(Collections.emptyMap());
@@ -75,19 +76,20 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
     }
 
     @Override
-    public void linkWorkspace(Workspace target, Workspace tail) {}
+    public void linkWorkspace(Workspace target, Workspace tail) throws IOException {}
 
     @Override
-    public void unlinkWorkspace(Workspace target, Workspace tail) {}
+    public void unlinkWorkspace(Workspace target, Workspace tail) throws IOException {}
 
     private Optional<Workspace> workspaceReDetector(
-            Path projectDirectory, Path localRepository, Map<String, String> properties) {
+            Path projectDirectory, Path localRepository, Map<String, String> properties) throws IOException {
         // cleanse to force Nisse invocation for another directory
         return detectWorkspace(projectDirectory, localRepository, propertiesManager.cleanseProperties(properties));
     }
 
     private Optional<Workspace> detectWorkspace(
-            Config config, Path projectDirectory, Path localRepository, Map<String, String> properties) {
+            Config config, Path projectDirectory, Path localRepository, Map<String, String> properties)
+            throws IOException {
         final String remoteName = properties.get(PropertiesManager.KEY_REMOTE_NAME);
         final String remoteUrl = properties.get(PropertiesManager.KEY_REMOTE_URL);
         final String branchName = properties.get(PropertiesManager.KEY_BRANCH_NAME);

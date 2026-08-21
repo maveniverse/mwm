@@ -8,15 +8,23 @@
 package eu.maveniverse.maven.mwm.core.internal;
 
 import eu.maveniverse.maven.mwm.core.Config;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Optional;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 @Singleton
 @Named
 public class ConfigurationManager {
-    public Config getConfig(Path projectDirectory, Map<String, String> properties) {
+    public Config getConfig(Path projectDirectory, Map<String, String> properties) throws IOException {
         return new Config() {};
     }
+
+    public Optional<Map<String, String>> load(String workspaceId) throws IOException {
+        return Optional.empty();
+    }
+
+    public void save(Map<String, String> properties) throws IOException {}
 }

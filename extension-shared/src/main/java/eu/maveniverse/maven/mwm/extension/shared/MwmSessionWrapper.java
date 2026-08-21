@@ -11,6 +11,7 @@ import static java.util.Objects.requireNonNull;
 
 import eu.maveniverse.maven.mwm.core.Workspace;
 import eu.maveniverse.maven.mwm.core.WorkspaceManager;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,14 +42,14 @@ public final class MwmSessionWrapper {
         this.workspaceManager = requireNonNull(workspaceManager);
     }
 
-    public RepositorySystemSession.SessionBuilder wrap(
-            Path projectRoot, RepositorySystemSession.SessionBuilder builder) {
+    public RepositorySystemSession.SessionBuilder wrap(Path projectRoot, RepositorySystemSession.SessionBuilder builder)
+            throws IOException {
         newLocalRepositoryManager(projectRoot, builder).ifPresent(builder::setLocalRepositoryManager);
         return builder;
     }
 
     private Optional<LocalRepositoryManager> newLocalRepositoryManager(
-            Path projectRoot, RepositorySystemSession.SessionBuilder builder) {
+            Path projectRoot, RepositorySystemSession.SessionBuilder builder) throws IOException {
         try (RepositorySystemSession.CloseableSession protoSession = builder.build()) {
             if (protoSession.getLocalRepositoryManager() instanceof ChainedLocalRepositoryManager) {
                 logger.info("Chained LRM detected; MWM is not interfering with it");

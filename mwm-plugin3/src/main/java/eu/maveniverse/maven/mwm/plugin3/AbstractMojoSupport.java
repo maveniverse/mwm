@@ -9,6 +9,7 @@ package eu.maveniverse.maven.mwm.plugin3;
 
 import eu.maveniverse.maven.mwm.core.Workspace;
 import eu.maveniverse.maven.mwm.core.WorkspaceManager;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -40,7 +41,7 @@ public abstract class AbstractMojoSupport extends AbstractMojo {
         return configProperties;
     }
 
-    protected Optional<Workspace> getWorkspace() {
+    protected Optional<Workspace> getWorkspace() throws IOException {
         Workspace workspace =
                 (Workspace) mavenSession.getRepositorySession().getData().get(Workspace.class);
         if (workspace == null) {

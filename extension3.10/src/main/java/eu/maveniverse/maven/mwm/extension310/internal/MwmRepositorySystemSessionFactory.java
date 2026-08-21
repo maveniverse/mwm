@@ -10,6 +10,8 @@ package eu.maveniverse.maven.mwm.extension310.internal;
 import static java.util.Objects.requireNonNull;
 
 import eu.maveniverse.maven.mwm.extension.shared.MwmSessionWrapper;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -36,8 +38,12 @@ final class MwmRepositorySystemSessionFactory implements RepositorySystemSession
     @Override
     public RepositorySystemSession.SessionBuilder newRepositorySessionBuilder(
             MavenExecutionRequest mavenExecutionRequest) {
-        return wrapper.wrap(
-                mavenExecutionRequest.getRootDirectory(),
-                defaultFactory.newRepositorySessionBuilder(mavenExecutionRequest));
+        try {
+            return wrapper.wrap(
+                    mavenExecutionRequest.getRootDirectory(),
+                    defaultFactory.newRepositorySessionBuilder(mavenExecutionRequest));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 }

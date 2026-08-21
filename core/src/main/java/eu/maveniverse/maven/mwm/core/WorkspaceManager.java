@@ -7,6 +7,7 @@
  */
 package eu.maveniverse.maven.mwm.core;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Map;
@@ -19,30 +20,31 @@ public interface WorkspaceManager {
     /**
      * List known workspaces.
      */
-    Collection<Workspace> listAll();
+    Collection<Workspace> listAll() throws IOException;
 
     /**
      * Lookup a workspace by ID.
      */
-    Optional<Workspace> lookup(String workspaceId);
+    Optional<Workspace> lookup(String workspaceId) throws IOException;
 
     /**
      * Drops a workspace by ID, purges if needed. Returns {@code true} if WS was found and could be dropped.
      */
-    boolean drop(String workspaceId, boolean purge);
+    boolean drop(String workspaceId, boolean purge) throws IOException;
 
     /**
      * Detects and may create a workspace handle.
      */
-    Optional<Workspace> detectWorkspace(Path projectDirectory, Path localRepository, Map<String, String> properties);
+    Optional<Workspace> detectWorkspace(Path projectDirectory, Path localRepository, Map<String, String> properties)
+            throws IOException;
 
     /**
      * Links {@code tail} workspace to {@code target} workspace.
      */
-    void linkWorkspace(Workspace target, Workspace tail);
+    void linkWorkspace(Workspace target, Workspace tail) throws IOException;
 
     /**
      * Unlinks {@code tail} workspace from {@code target} workspace.
      */
-    void unlinkWorkspace(Workspace target, Workspace tail);
+    void unlinkWorkspace(Workspace target, Workspace tail) throws IOException;
 }
