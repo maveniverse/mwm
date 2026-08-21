@@ -7,6 +7,8 @@
  */
 package eu.maveniverse.maven.mwm.core;
 
+import java.util.EnumSet;
+
 /**
  * Maven Workspace Manager configuration.
  */
@@ -20,13 +22,33 @@ public interface Config {
     }
 
     /**
-     * In case of git worktree, is current checkout joined with "default" workspace or not. If development happens on
-     * single "main" branch, and feature branches are used, this should be {@code true}. As a counter example, in
-     * case of Maven development, where you have "unrelated" branches like {@code maven-3.9.x} and {@code maven-3.10.x}
-     * etc., feature branches are created against these, and not against {@code main} or {@code master}.
+     * In case of git worktree, is current branch tailed with default branch workspace or not.
+     * <p>
+     * If development happens on single "main" branch, and feature branches are used, this should be {@code true}.
+     * As a counter example, in case of Maven development, where you have "unrelated" branches like
+     * {@code maven-3.9.x} and {@code maven-3.10.x}, feature branches are created against these, and this
+     * should be {@code false}.
      */
     default boolean isWorktreeJoined() {
         return true;
+    }
+
+    /**
+     * Discriminator elements.
+     */
+    enum DiscriminatorElements {
+        REMOTE_NAME,
+        HOST_NAME,
+        OWNER_NAME,
+        REPOSITORY_NAME,
+        BRANCH_NAME
+    }
+
+    /**
+     * Returns the elements creating workspace discriminator.
+     */
+    default EnumSet<DiscriminatorElements> getDiscriminatorElements() {
+        return EnumSet.allOf(DiscriminatorElements.class);
     }
 
     /**

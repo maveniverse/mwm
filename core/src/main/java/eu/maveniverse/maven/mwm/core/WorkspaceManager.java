@@ -8,6 +8,7 @@
 package eu.maveniverse.maven.mwm.core;
 
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 
@@ -16,7 +17,32 @@ import java.util.Optional;
  */
 public interface WorkspaceManager {
     /**
+     * List known workspaces.
+     */
+    Collection<Workspace> listAll();
+
+    /**
+     * Lookup a workspace by ID.
+     */
+    Optional<Workspace> lookup(String workspaceId);
+
+    /**
+     * Drops a workspace by ID, purges if needed. Returns {@code true} if WS was found and could be dropped.
+     */
+    boolean drop(String workspaceId, boolean purge);
+
+    /**
      * Detects and may create a workspace handle.
      */
     Optional<Workspace> detectWorkspace(Path projectDirectory, Path localRepository, Map<String, String> properties);
+
+    /**
+     * Links {@code tail} workspace to {@code target} workspace.
+     */
+    void linkWorkspace(Workspace target, Workspace tail);
+
+    /**
+     * Unlinks {@code tail} workspace from {@code target} workspace.
+     */
+    void unlinkWorkspace(Workspace target, Workspace tail);
 }

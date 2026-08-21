@@ -10,29 +10,31 @@ package eu.maveniverse.maven.mwm.core.internal;
 import static java.util.Objects.requireNonNull;
 
 import eu.maveniverse.maven.mwm.core.Workspace;
-import eu.maveniverse.maven.mwm.core.WorkspaceHandler;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
-public final class DefaultWorkspace implements Workspace {
+public class DefaultWorkspace implements Workspace {
     private final String workspaceId;
-    private final WorkspaceHandler workspaceHandler;
+    private final String discriminator;
     private final Map<String, String> properties;
+    private final Path projectDirectory;
     private final Path buildCacheDirectory;
     private final Path buildOutputDirectory;
     private final List<Workspace> linkedWorkspaces;
 
     public DefaultWorkspace(
             String workspaceId,
-            WorkspaceHandler workspaceHandler,
+            String discriminator,
             Map<String, String> properties,
+            Path projectDirectory,
             Path buildCacheDirectory,
             Path buildOutputDirectory,
             List<Workspace> linkedWorkspaces) {
         this.workspaceId = requireNonNull(workspaceId);
-        this.workspaceHandler = requireNonNull(workspaceHandler);
+        this.discriminator = requireNonNull(discriminator);
         this.properties = requireNonNull(properties);
+        this.projectDirectory = requireNonNull(projectDirectory);
         this.buildCacheDirectory = requireNonNull(buildCacheDirectory);
         this.buildOutputDirectory = requireNonNull(buildOutputDirectory);
         this.linkedWorkspaces = requireNonNull(linkedWorkspaces);
@@ -44,13 +46,18 @@ public final class DefaultWorkspace implements Workspace {
     }
 
     @Override
-    public WorkspaceHandler workspaceHandler() {
-        return workspaceHandler;
+    public String discriminator() {
+        return discriminator;
     }
 
     @Override
     public Map<String, String> properties() {
         return properties;
+    }
+
+    @Override
+    public Path projectDirectory() {
+        return projectDirectory;
     }
 
     @Override

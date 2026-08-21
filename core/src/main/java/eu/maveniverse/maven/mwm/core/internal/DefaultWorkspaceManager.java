@@ -9,20 +9,19 @@ package eu.maveniverse.maven.mwm.core.internal;
 
 import static java.util.Objects.requireNonNull;
 
+import eu.maveniverse.maven.mwm.core.Config;
 import eu.maveniverse.maven.mwm.core.Version;
 import eu.maveniverse.maven.mwm.core.Workspace;
-import eu.maveniverse.maven.mwm.core.WorkspaceHandler;
 import eu.maveniverse.maven.mwm.core.WorkspaceManager;
-import eu.maveniverse.maven.nisse.core.NisseConfiguration;
-import eu.maveniverse.maven.nisse.core.NisseManager;
-import eu.maveniverse.maven.nisse.core.PropertyKeyNamingStrategies;
-import eu.maveniverse.maven.nisse.core.simple.SimpleNisseConfiguration;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -32,88 +31,132 @@ import org.slf4j.LoggerFactory;
 @Singleton
 @Named
 public class DefaultWorkspaceManager implements WorkspaceManager {
-    static final String KEY_REMOTE_NAME = "nisse.jgit.remoteName";
-    static final String KEY_REMOTE_URL = "nisse.jgit.remoteUrl";
-    static final String KEY_BRANCH_NAME = "nisse.jgit.branchName";
-    static final String KEY_COMMON_DIR = "nisse.jgit.commonDir";
-
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final NisseManager nisseManager;
-    private final Map<String, WorkspaceHandler> workspaceHandlers;
+    private final ConfigurationManager configurationManager;
+    private final PropertiesManager propertiesManager;
 
     @Inject
-    public DefaultWorkspaceManager(NisseManager nisseManager, Map<String, WorkspaceHandler> workspaceHandlers) {
-        this.nisseManager = requireNonNull(nisseManager);
-        this.workspaceHandlers = requireNonNull(workspaceHandlers);
+    public DefaultWorkspaceManager(ConfigurationManager configurationManager, PropertiesManager propertiesManager) {
+        this.configurationManager = requireNonNull(configurationManager);
+        this.propertiesManager = requireNonNull(propertiesManager);
         logger.info("MWM {} (Resolver {})", Version.version(), Version.resolverVersion());
+    }
+
+    @Override
+    public Collection<Workspace> listAll() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public Optional<Workspace> lookup(String workspaceId) {
+        return Optional.empty();
+    }
+
+    @Override
+    public boolean drop(String workspaceId, boolean purge) {
+        return false;
     }
 
     @Override
     public Optional<Workspace> detectWorkspace(
             Path projectDirectory, Path localRepository, Map<String, String> properties) {
-        Optional<Map<String, String>> propsOptional = properties(properties, projectDirectory);
+        Optional<Map<String, String>> propsOptional = propertiesManager.maySeedProperties(projectDirectory, properties);
         if (propsOptional.isPresent()) {
             Map<String, String> props = propsOptional.orElse(Collections.emptyMap());
-            for (Map.Entry<String, WorkspaceHandler> entry : workspaceHandlers.entrySet()) {
-                Optional<Workspace> wo = entry.getValue()
-                        .detectWorkspace(
-                                projectDirectory,
-                                localRepository,
-                                props,
-                                workspaceDetector(localRepository, properties));
-                if (wo.isPresent()) {
-                    logger.debug("Workspace detected by handler: {}", entry.getKey());
-                    return wo;
-                }
+            final Config config = configurationManager.getConfig(projectDirectory, props);
+            Optional<Workspace> wo = detectWorkspace(config, projectDirectory, localRepository, props);
+            if (wo.isPresent()) {
+                logger.debug("Workspace detected");
+                return wo;
             }
         }
-        logger.debug("No workspace detected by any handler");
+        logger.debug("No workspace detected");
         return Optional.empty();
     }
 
-    private Function<Path, Optional<Workspace>> workspaceDetector(
-            Path localRepository, Map<String, String> properties) {
-        // to force Nisse for another directory
-        HashMap<String, String> dp = new HashMap<>(properties);
-        dp.remove(KEY_REMOTE_NAME);
-        dp.remove(KEY_REMOTE_URL);
-        dp.remove(KEY_BRANCH_NAME);
-        return p -> this.detectWorkspace(p, localRepository, dp);
+    @Override
+    public void linkWorkspace(Workspace target, Workspace tail) {}
+
+    @Override
+    public void unlinkWorkspace(Workspace target, Workspace tail) {}
+
+    private Optional<Workspace> workspaceReDetector(
+            Path projectDirectory, Path localRepository, Map<String, String> properties) {
+        // cleanse to force Nisse invocation for another directory
+        return detectWorkspace(projectDirectory, localRepository, propertiesManager.cleanseProperties(properties));
     }
 
-    /**
-     * Populates provided properties with nisse properties if needed.
-     */
-    private Optional<Map<String, String>> properties(Map<String, String> properties, Path projectDirectory) {
-        HashMap<String, String> props = new HashMap<>(properties);
-        if (!props.containsKey(KEY_REMOTE_NAME)
-                || !props.containsKey(KEY_REMOTE_URL)
-                || !props.containsKey(KEY_BRANCH_NAME)) {
-            logger.debug("Nisse properties absent; running Nisse");
-            props.putAll(nisseProperties(projectDirectory, props));
+    private Optional<Workspace> detectWorkspace(
+            Config config, Path projectDirectory, Path localRepository, Map<String, String> properties) {
+        final String remoteName = properties.get(PropertiesManager.KEY_REMOTE_NAME);
+        final String remoteUrl = properties.get(PropertiesManager.KEY_REMOTE_URL);
+        final String branchName = properties.get(PropertiesManager.KEY_BRANCH_NAME);
+        final String commonDir = properties.get(PropertiesManager.KEY_COMMON_DIR);
+
+        if (remoteName != null && remoteUrl != null && branchName != null) {
+            // remoteUrl: git@github.com:maveniverse/mwm.git or https://github.com/example/repo.git
+            // we want host + owner (without slashes) + repo
+            String workspaceId = remoteName + "-"
+                    + remoteUrl
+                            .replaceFirst("^(git@|https://)", "")
+                            .replaceFirst("\\.git$", "")
+                            .replaceAll("[:/]", "-") + "-" + branchName;
+            logger.debug("WS {}", workspaceId);
+
+            final Path buildCacheDirectory = resolveWorkspacePath(
+                    config.getBuildCacheScope(), projectDirectory, localRepository, true, workspaceId);
+            final Path buildOutputDirectory = resolveWorkspacePath(
+                    config.getBuildOutputScope(), projectDirectory, localRepository, false, workspaceId);
+
+            HashMap<String, String> props = new HashMap<>();
+            props.put("git.remoteName", remoteName);
+            props.put("git.remoteUrl", remoteUrl);
+            props.put("git.branchName", branchName);
+            props.put("workspaceId", workspaceId);
+            props.put("handler", getClass().getSimpleName());
+            props.put("rootDirectory", projectDirectory.toString());
+            props.put("buildCacheDirectory", buildCacheDirectory.toString());
+            props.put("buildOutputDirectory", buildOutputDirectory.toString());
+            ArrayList<Workspace> linkedWorkspaces = new ArrayList<>();
+            if (config.isWorktreeJoined() && commonDir != null) {
+                Path commonProjectDir = Paths.get(commonDir);
+                if (Files.isDirectory(commonProjectDir)
+                        && commonProjectDir.getParent() != null
+                        && Files.isDirectory(commonProjectDir.getParent())) {
+                    workspaceReDetector(commonProjectDir.getParent(), localRepository, properties)
+                            .ifPresent(linkedWorkspaces::add);
+                }
+            }
+            // TODO: config for linked workspaces
+            // TODO: discriminator
+            return Optional.of(new DefaultWorkspace(
+                    workspaceId,
+                    workspaceId,
+                    props,
+                    projectDirectory,
+                    buildCacheDirectory,
+                    buildOutputDirectory,
+                    linkedWorkspaces));
         }
-        if (!props.containsKey(KEY_REMOTE_NAME)
-                || !props.containsKey(KEY_REMOTE_URL)
-                || !props.containsKey(KEY_BRANCH_NAME)) {
-            logger.info("Nisse properties absent after running Nisse; bailing out");
-            return Optional.empty();
-        }
-        return Optional.of(props);
+        return Optional.empty();
     }
 
-    /**
-     * Creates Nisse properties as fallback; if Nisse properties detected, is not invoked.
-     */
-    private Map<String, String> nisseProperties(Path rootDirectory, Map<String, String> properties) {
-        NisseConfiguration configuration = SimpleNisseConfiguration.builder()
-                .withSystemProperties(properties)
-                .withCurrentWorkingDirectory(rootDirectory)
-                .withSessionRootDirectory(rootDirectory)
-                .combinePropertyKeyNamingStrategy(PropertyKeyNamingStrategies.translated(
-                        Collections.emptyMap(),
-                        PropertyKeyNamingStrategies.sourcePrefixed(),
-                        PropertyKeyNamingStrategies.defaultStrategy()))
-                .build();
-        return nisseManager.createProperties(configuration);
+    private Path resolveWorkspacePath(
+            Config.Scope scope, Path projectDirectory, Path localRepository, boolean cache, String workspaceId) {
+        if (scope == Config.Scope.PROJECT) {
+            if (cache) {
+                return projectDirectory.resolve(".mvn-local").resolve("cache");
+            } else {
+                return projectDirectory.resolve(".mvn-local").resolve("build").resolve(workspaceId);
+            }
+        } else if (scope == Config.Scope.USER) {
+            if (cache) {
+                return localRepository;
+            } else {
+                return localRepository.resolve("mwm-workspace").resolve(workspaceId);
+            }
+        } else {
+            throw new IllegalArgumentException("Invalid build cache scope provided: " + scope);
+        }
     }
 }

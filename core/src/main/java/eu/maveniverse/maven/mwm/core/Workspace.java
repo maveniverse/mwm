@@ -21,14 +21,19 @@ public interface Workspace {
     String workspaceId();
 
     /**
-     * The handler of workspace.
+     * The workspace "discriminator" string; usually same as {@link #workspaceId()}.
      */
-    WorkspaceHandler workspaceHandler();
+    String discriminator();
 
     /**
      * The workspace properties.
      */
     Map<String, String> properties();
+
+    /**
+     * The location of the project root.
+     */
+    Path projectDirectory();
 
     /**
      * The location of the build cache output.
