@@ -18,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -97,13 +98,34 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
 
         if (remoteName != null && remoteUrl != null && branchName != null) {
             // remoteUrl: git@github.com:maveniverse/mwm.git or https://github.com/example/repo.git
-            // we want host + owner (without slashes) + repo
-            String workspaceId = remoteName + "-"
-                    + remoteUrl
-                            .replaceFirst("^(git@|https://)", "")
-                            .replaceFirst("\\.git$", "")
-                            .replaceAll("[:/]", "-") + "-" + branchName;
-            String workspaceDiscriminator = workspaceId;
+            // we want DiscriminatorElements elements
+            String[] shavenUrl = remoteUrl
+                    .replaceFirst("^(git@|https://)", "")
+                    .replaceFirst("\\.git$", "")
+                    .split("[/:]");
+            if (shavenUrl.length < 3) {
+                return Optional.empty();
+            }
+
+            HashMap<Config.DiscriminatorElements, String> elems = new HashMap<>();
+            elems.put(Config.DiscriminatorElements.REMOTE, remoteName);
+            elems.put(Config.DiscriminatorElements.HOST, shavenUrl[0]);
+            elems.put(
+                    Config.DiscriminatorElements.OWNER,
+                    String.join("-", Arrays.asList(shavenUrl).subList(1, shavenUrl.length - 1)));
+            elems.put(Config.DiscriminatorElements.REPOSITORY, shavenUrl[shavenUrl.length - 1]);
+            elems.put(Config.DiscriminatorElements.BRANCH, branchName);
+
+            ArrayList<String> workspaceIdArr = new ArrayList<>();
+            ArrayList<String> workspaceDiscriminatorArr = new ArrayList<>();
+            for (Config.DiscriminatorElements e : Config.DiscriminatorElements.values()) {
+                workspaceIdArr.add(elems.get(e));
+                if (config.getDiscriminatorElements().contains(e)) {
+                    workspaceDiscriminatorArr.add(elems.get(e));
+                }
+            }
+            final String workspaceId = String.join("-", workspaceIdArr);
+            final String workspaceDiscriminator = String.join("-", workspaceDiscriminatorArr);
             logger.debug("WS {} ({})", workspaceId, workspaceDiscriminator);
 
             final Path buildCacheDirectory = resolveWorkspacePath(
@@ -148,16 +170,18 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
             Config.Scope scope, Path projectDirectory, Path localRepository, boolean cache, String workspaceId) {
         if (scope == Config.Scope.PROJECT) {
             if (cache) {
-                return projectDirectory.resolve(".mvn-local").resolve("cache");
+                return projectDirectory.resolve(".mvn-local").resolve("cached");
             } else {
-                return projectDirectory.resolve(".mvn-local").resolve("build");
+                return projectDirectory.resolve(".mvn-local").resolve("installed");
+            }
+        } else if (scope == Config.Scope.USER_SCOPED) {
+            if (cache) {
+                return localRepository.resolve("cached").resolve(workspaceId);
+            } else {
+                return localRepository.resolve("installed").resolve(workspaceId);
             }
         } else if (scope == Config.Scope.USER) {
-            if (cache) {
-                return localRepository;
-            } else {
-                return localRepository.resolve("mwm-workspace").resolve(workspaceId);
-            }
+            return localRepository;
         } else {
             throw new IllegalArgumentException("Invalid build cache scope provided: " + scope);
         }

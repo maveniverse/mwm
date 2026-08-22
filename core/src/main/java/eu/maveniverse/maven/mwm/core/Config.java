@@ -14,10 +14,20 @@ import java.util.EnumSet;
  */
 public interface Config {
     /**
-     * Project wide, user wide.
+     * Project scoped, user scoped.
      */
     enum Scope {
+        /**
+         * Content is kept with project in {@code .mvn-local/[cached|installed]} directory.
+         */
         PROJECT,
+        /**
+         * Content is kept in user home under {@code ~/.m2/repository/[cached|installed]/$WORKSPACE_ID}.
+         */
+        USER_SCOPED,
+        /**
+         * Content is kept in user home under {@code ~/.m2/repository} (as Maven 3 always did).
+         */
         USER
     }
 
@@ -37,18 +47,33 @@ public interface Config {
      * Discriminator elements.
      */
     enum DiscriminatorElements {
-        REMOTE_NAME,
-        HOST_NAME,
-        OWNER_NAME,
-        REPOSITORY_NAME,
-        BRANCH_NAME
+        /**
+         * The git remote name, for example {@code origin}.
+         */
+        REMOTE,
+        /**
+         * The repository host, for example {@code github.com}.
+         */
+        HOST,
+        /**
+         * The repository owner, for example {@code apache}.
+         */
+        OWNER,
+        /**
+         * The repository name, for example {@code maven}.
+         */
+        REPOSITORY,
+        /**
+         * The branch name, for example {@code master}.
+         */
+        BRANCH
     }
 
     /**
      * Returns the elements creating workspace discriminator.
      */
     default EnumSet<DiscriminatorElements> getDiscriminatorElements() {
-        return EnumSet.allOf(DiscriminatorElements.class);
+        return EnumSet.of(DiscriminatorElements.HOST, DiscriminatorElements.OWNER, DiscriminatorElements.BRANCH);
     }
 
     /**
