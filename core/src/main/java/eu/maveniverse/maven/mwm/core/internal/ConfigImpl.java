@@ -20,6 +20,7 @@ public class ConfigImpl implements Config {
     static final String INSTALLED_DIR = "installed-dir";
     static final String DISCRIMINATOR_ELEMENTS = "discriminator-elements";
     static final String WORKTREE_JOINED = "worktree-joined";
+    static final String LINK_ENFORCED = "link-enforced";
     static final String BUILD_CACHE_SCOPE = "build-cache-scope";
     static final String BUILD_OUTPUT_SCOPE = "build-output-scope";
 
@@ -54,6 +55,12 @@ public class ConfigImpl implements Config {
     public boolean isWorktreeJoined() {
         return Boolean.parseBoolean(
                 config.getOrDefault(WORKTREE_JOINED, Boolean.toString(Config.super.isWorktreeJoined())));
+    }
+
+    @Override
+    public boolean isLinkEnforced() {
+        return Boolean.parseBoolean(
+                config.getOrDefault(LINK_ENFORCED, Boolean.toString(Config.super.isLinkEnforced())));
     }
 
     @Override

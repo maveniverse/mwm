@@ -11,6 +11,9 @@ import java.util.EnumSet;
 
 /**
  * Maven Workspace Manager global configuration.
+ * <p>
+ * Note: when both, {@link #getBuildCacheScope()} and {@link #getBuildOutputScope()} set to {@link Scope#USER}, MWM
+ * will keep itself inactive, as that configuration is basically "let Maven work as by default".
  */
 public interface Config {
     /**
@@ -91,6 +94,14 @@ public interface Config {
      * should be {@code false}.
      */
     default boolean isWorktreeJoined() {
+        return true;
+    }
+
+    /**
+     * If links are enforced, then MWM will fail if there is a link, but the Workspace could not be detected.
+     * If links are not enforced, MWM will silently skip (but not drop) linked, but non-detected Workspaces.
+     */
+    default boolean isLinkEnforced() {
         return true;
     }
 

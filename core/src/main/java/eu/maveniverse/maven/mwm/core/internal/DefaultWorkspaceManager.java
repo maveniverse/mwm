@@ -50,22 +50,29 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
         if (propsOptional.isPresent()) {
             Map<String, String> props = propsOptional.orElse(Collections.emptyMap());
             final Config config = configurationManager.getConfig(projectDirectory, props);
-            Optional<Workspace> wo = detectWorkspace(config, projectDirectory, localRepository, props);
-            if (wo.isPresent()) {
-                logger.debug("Workspace detected");
-                return wo;
+            if (config.getBuildOutputScope() != Config.Scope.USER || config.getBuildCacheScope() != Config.Scope.USER) {
+                Optional<Workspace> wo = detectWorkspace(config, projectDirectory, localRepository, props);
+                if (wo.isPresent()) {
+                    logger.debug("Workspace detected");
+                    return wo;
+                } else {
+                    logger.debug("No workspace detected");
+                }
+            } else {
+                logger.debug("MWM configured to not interfere");
             }
         }
-        logger.debug("No workspace detected");
         return Optional.empty();
     }
 
     @Override
-    public void linkWorkspace(Workspace target, Workspace other) throws IOException {}
+    public void linkWorkspace(Workspace target, Workspace other) throws IOException {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
 
     @Override
     public boolean unlinkWorkspace(Workspace target, Workspace other) throws IOException {
-        return false;
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     private Optional<Workspace> workspaceReDetector(
@@ -136,6 +143,30 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
                         && Files.isDirectory(commonProjectDir.getParent())) {
                     workspaceReDetector(commonProjectDir.getParent(), localRepository, properties)
                             .ifPresent(linkedWorkspaces::add);
+                }
+            }
+            if (elems.containsKey("workspace.links")) {
+                String[] links = elems.get("workspace.links").split(",");
+                for (String link : links) {
+                    Path projectDir = Paths.get(link);
+                    if (Files.isDirectory(projectDir)) {
+                        Optional<Workspace> linkedWs = workspaceReDetector(projectDir, localRepository, properties);
+                        if (linkedWs.isPresent()) {
+                            linkedWorkspaces.add(linkedWs.get());
+                        } else {
+                            if (config.isLinkEnforced()) {
+                                throw new IOException("Linked workspace at path not found: " + link);
+                            } else {
+                                logger.warn("Linked workspace at path not found: " + link);
+                            }
+                        }
+                    } else {
+                        if (config.isLinkEnforced()) {
+                            throw new IOException("Stale workspace link to path: " + link);
+                        } else {
+                            logger.warn("Stale workspace link to path: " + link);
+                        }
+                    }
                 }
             }
             configurationManager.saveWorkspace(projectDirectory, elems);
