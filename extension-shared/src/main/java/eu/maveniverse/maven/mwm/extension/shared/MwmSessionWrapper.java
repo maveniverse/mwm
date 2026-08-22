@@ -52,11 +52,11 @@ public final class MwmSessionWrapper {
             Path projectRoot, RepositorySystemSession.SessionBuilder builder) throws IOException {
         try (RepositorySystemSession.CloseableSession protoSession = builder.build()) {
             if (protoSession.getLocalRepositoryManager() instanceof ChainedLocalRepositoryManager) {
-                logger.info("Chained LRM detected; MWM is not interfering with it");
+                logger.warn("Chained LRM detected; MWM is not interfering with it");
                 return Optional.empty();
             }
             if (protoSession.getLocalRepositoryManager() == null) {
-                logger.info("No LRM detected; This session is incomplete with MWM");
+                logger.warn("No LRM detected; This session is incomplete with MWM");
                 return Optional.empty();
             }
 

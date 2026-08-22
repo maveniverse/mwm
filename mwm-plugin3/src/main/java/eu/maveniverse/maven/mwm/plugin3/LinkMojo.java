@@ -8,6 +8,8 @@
 package eu.maveniverse.maven.mwm.plugin3;
 
 import eu.maveniverse.maven.mwm.core.Workspace;
+import eu.maveniverse.maven.shared.core.fs.FileUtils;
+import java.nio.file.Path;
 import java.util.Optional;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -18,22 +20,24 @@ import org.apache.maven.plugins.annotations.Parameter;
  */
 @Mojo(name = "link", threadSafe = true, requiresProject = false)
 public class LinkMojo extends AbstractMojoSupport {
-    @Parameter(property = "mwm.workspaceId")
-    private String workspaceId;
-
-    @Parameter(property = "mwm.other", required = true)
+    @Parameter(property = "mwm.other")
     private String other;
 
     @Override
     public void execute() throws MojoExecutionException {
         try {
-            Optional<Workspace> workspace = workspaceId != null ? workspaceManager.lookup(workspaceId) : getWorkspace();
+            Optional<Workspace> workspace = getWorkspace();
             if (workspace.isPresent()) {
-                Workspace target = workspace.orElseThrow(() -> new MojoExecutionException("value not present"));
-                Workspace tail = workspaceManager.lookup(other).orElse(null);
-                if (tail != null) {
-                    workspaceManager.linkWorkspace(target, tail);
-                    logger.info("Workspace {} linked with {}", target.workspaceId(), tail.workspaceId());
+                Workspace ws = workspace.orElseThrow(() -> new MojoExecutionException("value not present"));
+                Path basedir = FileUtils.discoverPathFromSystemProperty(
+                        "basedir",
+                        FileUtils.discoverUserCurrentWorkingDirectory().toString());
+                Optional<Workspace> otherWs = workspaceManager.detectWorkspace(
+                        basedir.resolve(other), ws.localRepository(), getConfigPropertiesAsString());
+                if (otherWs.isPresent()) {
+                    Workspace ot = otherWs.orElseThrow(() -> new MojoExecutionException("value not present"));
+                    workspaceManager.linkWorkspace(ws, ot);
+                    logger.info("Workspace {} linked with {}", ws.workspaceId(), ot.workspaceId());
                 } else {
                     logger.info("Other Workspace {} not found", other);
                 }

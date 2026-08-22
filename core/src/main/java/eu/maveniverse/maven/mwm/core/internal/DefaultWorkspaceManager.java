@@ -19,7 +19,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -45,21 +44,6 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
     }
 
     @Override
-    public Collection<Workspace> listAll() throws IOException {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public Optional<Workspace> lookup(String workspaceId) throws IOException {
-        return Optional.empty();
-    }
-
-    @Override
-    public boolean drop(String workspaceId, boolean purge) throws IOException {
-        return false;
-    }
-
-    @Override
     public Optional<Workspace> detectWorkspace(
             Path projectDirectory, Path localRepository, Map<String, String> properties) throws IOException {
         Optional<Map<String, String>> propsOptional = propertiesManager.maySeedProperties(projectDirectory, properties);
@@ -77,10 +61,12 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
     }
 
     @Override
-    public void linkWorkspace(Workspace target, Workspace tail) throws IOException {}
+    public void linkWorkspace(Workspace target, Workspace other) throws IOException {}
 
     @Override
-    public void unlinkWorkspace(Workspace target, Workspace tail) throws IOException {}
+    public boolean unlinkWorkspace(Workspace target, Workspace other) throws IOException {
+        return false;
+    }
 
     private Optional<Workspace> workspaceReDetector(
             Path projectDirectory, Path localRepository, Map<String, String> properties) throws IOException {
@@ -107,21 +93,22 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
                 return Optional.empty();
             }
 
-            HashMap<Config.DiscriminatorElements, String> elems = new HashMap<>();
-            elems.put(Config.DiscriminatorElements.REMOTE, remoteName);
-            elems.put(Config.DiscriminatorElements.HOST, shavenUrl[0]);
+            Map<String, String> elems =
+                    configurationManager.loadWorkspace(projectDirectory).orElse(new HashMap<>());
+            elems.put(Config.DiscriminatorElements.REMOTE.name(), remoteName);
+            elems.put(Config.DiscriminatorElements.HOST.name(), shavenUrl[0]);
             elems.put(
-                    Config.DiscriminatorElements.OWNER,
+                    Config.DiscriminatorElements.OWNER.name(),
                     String.join("-", Arrays.asList(shavenUrl).subList(1, shavenUrl.length - 1)));
-            elems.put(Config.DiscriminatorElements.REPOSITORY, shavenUrl[shavenUrl.length - 1]);
-            elems.put(Config.DiscriminatorElements.BRANCH, branchName);
+            elems.put(Config.DiscriminatorElements.REPOSITORY.name(), shavenUrl[shavenUrl.length - 1]);
+            elems.put(Config.DiscriminatorElements.BRANCH.name(), branchName);
 
             ArrayList<String> workspaceIdArr = new ArrayList<>();
             ArrayList<String> workspaceDiscriminatorArr = new ArrayList<>();
             for (Config.DiscriminatorElements e : Config.DiscriminatorElements.values()) {
-                workspaceIdArr.add(elems.get(e));
+                workspaceIdArr.add(elems.get(e.name()));
                 if (config.getDiscriminatorElements().contains(e)) {
-                    workspaceDiscriminatorArr.add(elems.get(e));
+                    workspaceDiscriminatorArr.add(elems.get(e.name()));
                 }
             }
             final String workspaceId = String.join("-", workspaceIdArr);
@@ -133,15 +120,14 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
             final Path buildOutputDirectory = resolveWorkspacePath(
                     config, config.getBuildOutputScope(), projectDirectory, localRepository, false, workspaceId);
 
-            HashMap<String, String> props = new HashMap<>();
-            props.put("git.remoteName", remoteName);
-            props.put("git.remoteUrl", remoteUrl);
-            props.put("git.branchName", branchName);
+            elems.put("git.remoteName", remoteName);
+            elems.put("git.remoteUrl", remoteUrl);
+            elems.put("git.branchName", branchName);
             if (commonDir != null) {
-                props.put("git.commonDir", commonDir);
+                elems.put("git.commonDir", commonDir);
             }
-            props.put("workspace.id", workspaceId);
-            props.put("workspace.discriminator", workspaceDiscriminator);
+            elems.put("workspace.id", workspaceId);
+            elems.put("workspace.discriminator", workspaceDiscriminator);
             ArrayList<Workspace> linkedWorkspaces = new ArrayList<>();
             if (config.isWorktreeJoined() && commonDir != null) {
                 Path commonProjectDir = Paths.get(commonDir);
@@ -152,13 +138,13 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
                             .ifPresent(linkedWorkspaces::add);
                 }
             }
-            // TODO: config for linked workspaces
-            // TODO: discriminator
+            configurationManager.saveWorkspace(projectDirectory, elems);
             return Optional.of(new WorkspaceImpl(
                     workspaceId,
                     workspaceDiscriminator,
-                    props,
+                    elems,
                     projectDirectory,
+                    localRepository,
                     buildCacheDirectory,
                     buildOutputDirectory,
                     linkedWorkspaces));
@@ -175,9 +161,9 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
             String workspaceId) {
         if (scope == Config.Scope.PROJECT) {
             if (cache) {
-                return projectDirectory.resolve(config.mvnLocal()).resolve(config.cachedDir());
+                return projectDirectory.resolve(Config.MVN_LOCAL).resolve(config.cachedDir());
             } else {
-                return projectDirectory.resolve(config.mvnLocal()).resolve(config.installedDir());
+                return projectDirectory.resolve(Config.MVN_LOCAL).resolve(config.installedDir());
             }
         } else if (scope == Config.Scope.USER_SCOPED) {
             if (cache) {

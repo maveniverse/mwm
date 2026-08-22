@@ -10,29 +10,13 @@ package eu.maveniverse.maven.mwm.core;
 import java.util.EnumSet;
 
 /**
- * Maven Workspace Manager configuration.
+ * Maven Workspace Manager global configuration.
  */
 public interface Config {
     /**
-     * The project "maven local" directory.
+     * Special "maven local" directory; should be git-ignored just like target is.
      */
-    default String mvnLocal() {
-        return ".mvn-local";
-    }
-
-    /**
-     * The name of the directory for cached artifacts.
-     */
-    default String cachedDir() {
-        return "cached";
-    }
-
-    /**
-     * The name of the directory for installed artifacts.
-     */
-    default String installedDir() {
-        return "installed";
-    }
+    String MVN_LOCAL = ".mvn-local";
 
     /**
      * Project scoped, user scoped.
@@ -75,6 +59,20 @@ public interface Config {
          * The branch name, for example {@code master}.
          */
         BRANCH
+    }
+
+    /**
+     * The name of the directory for cached artifacts.
+     */
+    default String cachedDir() {
+        return "cached";
+    }
+
+    /**
+     * The name of the directory for installed artifacts.
+     */
+    default String installedDir() {
+        return "installed";
     }
 
     /**

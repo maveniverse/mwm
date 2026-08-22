@@ -36,6 +36,11 @@ public interface Workspace {
     Path projectDirectory();
 
     /**
+     * The location of the Maven local repository.
+     */
+    Path localRepository();
+
+    /**
      * The location of the build cache output.
      */
     Path buildCacheDirectory();

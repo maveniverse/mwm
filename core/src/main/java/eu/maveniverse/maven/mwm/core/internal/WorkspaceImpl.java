@@ -19,6 +19,7 @@ public class WorkspaceImpl implements Workspace {
     private final String discriminator;
     private final Map<String, String> properties;
     private final Path projectDirectory;
+    private final Path localRepository;
     private final Path buildCacheDirectory;
     private final Path buildOutputDirectory;
     private final List<Workspace> linkedWorkspaces;
@@ -28,6 +29,7 @@ public class WorkspaceImpl implements Workspace {
             String discriminator,
             Map<String, String> properties,
             Path projectDirectory,
+            Path localRepository,
             Path buildCacheDirectory,
             Path buildOutputDirectory,
             List<Workspace> linkedWorkspaces) {
@@ -35,6 +37,7 @@ public class WorkspaceImpl implements Workspace {
         this.discriminator = requireNonNull(discriminator);
         this.properties = requireNonNull(properties);
         this.projectDirectory = requireNonNull(projectDirectory);
+        this.localRepository = requireNonNull(localRepository);
         this.buildCacheDirectory = requireNonNull(buildCacheDirectory);
         this.buildOutputDirectory = requireNonNull(buildOutputDirectory);
         this.linkedWorkspaces = requireNonNull(linkedWorkspaces);
@@ -58,6 +61,11 @@ public class WorkspaceImpl implements Workspace {
     @Override
     public Path projectDirectory() {
         return projectDirectory;
+    }
+
+    @Override
+    public Path localRepository() {
+        return localRepository;
     }
 
     @Override
