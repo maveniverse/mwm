@@ -13,6 +13,7 @@ import eu.maveniverse.maven.mwm.core.Workspace;
 import eu.maveniverse.maven.mwm.core.WorkspaceManager;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -82,9 +83,14 @@ public final class MwmSessionWrapper {
                 ArrayList<LocalRepositoryManager> tail = new ArrayList<>();
                 tail.add(repositorySystem.newLocalRepositoryManager(
                         protoSession, new LocalRepository(workspace.buildOutputDirectory())));
-                for (Workspace linked : workspace.linkedWorkspaces()) {
+
+                // collect and recursively (in depth-order) add all linked workspaces as tail
+                ArrayDeque<Workspace> workspaces = new ArrayDeque<>(workspace.linkedWorkspaces());
+                while (!workspaces.isEmpty()) {
+                    Workspace linked = workspaces.pop();
                     tail.add(repositorySystem.newLocalRepositoryManager(
                             protoSession, new LocalRepository(linked.buildOutputDirectory())));
+                    workspaces.addAll(linked.linkedWorkspaces());
                 }
                 return Optional.of(new ChainedLocalRepositoryManager(head, tail, false, 1, 0));
             }

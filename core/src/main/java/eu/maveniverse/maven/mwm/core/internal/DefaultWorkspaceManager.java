@@ -13,6 +13,7 @@ import eu.maveniverse.maven.mwm.core.Config;
 import eu.maveniverse.maven.mwm.core.Version;
 import eu.maveniverse.maven.mwm.core.Workspace;
 import eu.maveniverse.maven.mwm.core.WorkspaceManager;
+import eu.maveniverse.maven.shared.core.fs.FileUtils;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -44,8 +46,9 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
     }
 
     @Override
-    public Optional<Workspace> detectWorkspace(
-            Path projectDirectory, Path localRepository, Map<String, String> properties) throws IOException {
+    public Optional<Workspace> detectWorkspace(Path pd, Path ld, Map<String, String> properties) throws IOException {
+        Path projectDirectory = FileUtils.normalizePath(pd);
+        Path localRepository = FileUtils.normalizePath(ld);
         Optional<Map<String, String>> propsOptional = propertiesManager.maySeedProperties(projectDirectory, properties);
         if (propsOptional.isPresent()) {
             Map<String, String> props = propsOptional.orElse(Collections.emptyMap());
@@ -67,12 +70,47 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
 
     @Override
     public void linkWorkspace(Workspace target, Workspace other) throws IOException {
-        throw new UnsupportedOperationException("Not supported yet.");
+        Optional<Map<String, String>> t = configurationManager.loadWorkspace(target.projectDirectory());
+        if (t.isPresent()) {
+            Map<String, String> props = t.get();
+            if (props.containsKey("workspace.links")) {
+                props.put(
+                        "workspace.links",
+                        props.get("workspace.links") + ","
+                                + other.projectDirectory().toString());
+            } else {
+                props.put("workspace.links", other.projectDirectory().toString());
+            }
+            configurationManager.saveWorkspace(target.projectDirectory(), props);
+        } else {
+            throw new IOException("Target Workspace not found");
+        }
     }
 
     @Override
     public boolean unlinkWorkspace(Workspace target, Workspace other) throws IOException {
-        throw new UnsupportedOperationException("Not supported yet.");
+        Optional<Map<String, String>> t = configurationManager.loadWorkspace(target.projectDirectory());
+        if (t.isPresent()) {
+            Map<String, String> props = t.get();
+            if (props.containsKey("workspace.links")) {
+                List<String> links = new ArrayList<>(
+                        Arrays.asList(props.get("workspace.links").split(",")));
+                boolean res = links.remove(other.projectDirectory().toString());
+                if (res) {
+                    if (links.isEmpty()) {
+                        props.remove("workspace.links");
+                    } else {
+                        props.put("workspace.links", String.join(",", links));
+                    }
+                    configurationManager.saveWorkspace(target.projectDirectory(), props);
+                }
+                return res;
+            } else {
+                return false;
+            }
+        } else {
+            throw new IOException("Target Workspace not found");
+        }
     }
 
     private Optional<Workspace> workspaceReDetector(
