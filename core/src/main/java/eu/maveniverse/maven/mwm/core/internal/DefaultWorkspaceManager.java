@@ -129,9 +129,9 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
             logger.debug("WS {} ({})", workspaceId, workspaceDiscriminator);
 
             final Path buildCacheDirectory = resolveWorkspacePath(
-                    config.getBuildCacheScope(), projectDirectory, localRepository, true, workspaceId);
+                    config, config.getBuildCacheScope(), projectDirectory, localRepository, true, workspaceId);
             final Path buildOutputDirectory = resolveWorkspacePath(
-                    config.getBuildOutputScope(), projectDirectory, localRepository, false, workspaceId);
+                    config, config.getBuildOutputScope(), projectDirectory, localRepository, false, workspaceId);
 
             HashMap<String, String> props = new HashMap<>();
             props.put("git.remoteName", remoteName);
@@ -154,7 +154,7 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
             }
             // TODO: config for linked workspaces
             // TODO: discriminator
-            return Optional.of(new DefaultWorkspace(
+            return Optional.of(new WorkspaceImpl(
                     workspaceId,
                     workspaceDiscriminator,
                     props,
@@ -167,18 +167,23 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
     }
 
     private Path resolveWorkspacePath(
-            Config.Scope scope, Path projectDirectory, Path localRepository, boolean cache, String workspaceId) {
+            Config config,
+            Config.Scope scope,
+            Path projectDirectory,
+            Path localRepository,
+            boolean cache,
+            String workspaceId) {
         if (scope == Config.Scope.PROJECT) {
             if (cache) {
-                return projectDirectory.resolve(".mvn-local").resolve("cached");
+                return projectDirectory.resolve(config.mvnLocal()).resolve(config.cachedDir());
             } else {
-                return projectDirectory.resolve(".mvn-local").resolve("installed");
+                return projectDirectory.resolve(config.mvnLocal()).resolve(config.installedDir());
             }
         } else if (scope == Config.Scope.USER_SCOPED) {
             if (cache) {
-                return localRepository.resolve("cached").resolve(workspaceId);
+                return localRepository.resolve(config.cachedDir()).resolve(workspaceId);
             } else {
-                return localRepository.resolve("installed").resolve(workspaceId);
+                return localRepository.resolve(config.installedDir()).resolve(workspaceId);
             }
         } else if (scope == Config.Scope.USER) {
             return localRepository;

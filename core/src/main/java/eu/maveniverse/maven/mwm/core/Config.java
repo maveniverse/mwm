@@ -14,6 +14,27 @@ import java.util.EnumSet;
  */
 public interface Config {
     /**
+     * The project "maven local" directory.
+     */
+    default String mvnLocal() {
+        return ".mvn-local";
+    }
+
+    /**
+     * The name of the directory for cached artifacts.
+     */
+    default String cachedDir() {
+        return "cached";
+    }
+
+    /**
+     * The name of the directory for installed artifacts.
+     */
+    default String installedDir() {
+        return "installed";
+    }
+
+    /**
      * Project scoped, user scoped.
      */
     enum Scope {
@@ -30,19 +51,6 @@ public interface Config {
          */
         USER
     }
-
-    /**
-     * In case of git worktree, is current branch tailed with default branch workspace or not.
-     * <p>
-     * If development happens on single "main" branch, and feature branches are used, this should be {@code true}.
-     * As a counter example, in case of Maven development, where you have "unrelated" branches like
-     * {@code maven-3.9.x} and {@code maven-3.10.x}, feature branches are created against these, and this
-     * should be {@code false}.
-     */
-    default boolean isWorktreeJoined() {
-        return true;
-    }
-
     /**
      * Discriminator elements.
      */
@@ -74,6 +82,18 @@ public interface Config {
      */
     default EnumSet<DiscriminatorElements> getDiscriminatorElements() {
         return EnumSet.of(DiscriminatorElements.HOST, DiscriminatorElements.OWNER, DiscriminatorElements.BRANCH);
+    }
+
+    /**
+     * In case of git worktree, is current branch tailed with default branch workspace or not.
+     * <p>
+     * If development happens on single "main" branch, and feature branches are used, this should be {@code true}.
+     * As a counter example, in case of Maven development, where you have "unrelated" branches like
+     * {@code maven-3.9.x} and {@code maven-3.10.x}, feature branches are created against these, and this
+     * should be {@code false}.
+     */
+    default boolean isWorktreeJoined() {
+        return true;
     }
 
     /**

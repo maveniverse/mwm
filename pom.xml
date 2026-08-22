@@ -122,6 +122,11 @@
 
       <dependency>
         <groupId>eu.maveniverse.maven.shared</groupId>
+        <artifactId>core</artifactId>
+        <version>${version.maveniverseShared}</version>
+      </dependency>
+      <dependency>
+        <groupId>eu.maveniverse.maven.shared</groupId>
         <artifactId>extension</artifactId>
         <version>${version.maveniverseShared}</version>
       </dependency>
