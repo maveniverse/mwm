@@ -21,11 +21,11 @@ public class DetectMojo extends AbstractMojoSupport {
         try {
             Workspace workspace = getWorkspace().orElse(null);
             if (workspace != null) {
-                logger.info("MWM is active");
-                logger.info("=============");
+                logger.info("MWM workspace detected");
+                logger.info("======================");
                 dumpWorkspace(workspace);
             } else {
-                logger.info("MWM is not active.");
+                logger.info("MWM workspace is not detected");
             }
         } catch (Exception e) {
             throw new MojoExecutionException("Error while detecting MWM status", e);

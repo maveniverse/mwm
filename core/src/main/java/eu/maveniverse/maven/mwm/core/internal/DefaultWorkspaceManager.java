@@ -40,7 +40,7 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
     public DefaultWorkspaceManager(ConfigurationManager configurationManager, PropertiesManager propertiesManager) {
         this.configurationManager = requireNonNull(configurationManager);
         this.propertiesManager = requireNonNull(propertiesManager);
-        logger.info("MWM {} (Resolver {})", Version.version(), Version.resolverVersion());
+        logger.info("MWM {}", Version.version());
     }
 
     @Override
@@ -103,7 +103,8 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
                             .replaceFirst("^(git@|https://)", "")
                             .replaceFirst("\\.git$", "")
                             .replaceAll("[:/]", "-") + "-" + branchName;
-            logger.debug("WS {}", workspaceId);
+            String workspaceDiscriminator = workspaceId;
+            logger.debug("WS {} ({})", workspaceId, workspaceDiscriminator);
 
             final Path buildCacheDirectory = resolveWorkspacePath(
                     config.getBuildCacheScope(), projectDirectory, localRepository, true, workspaceId);
@@ -114,11 +115,11 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
             props.put("git.remoteName", remoteName);
             props.put("git.remoteUrl", remoteUrl);
             props.put("git.branchName", branchName);
-            props.put("workspaceId", workspaceId);
-            props.put("handler", getClass().getSimpleName());
-            props.put("rootDirectory", projectDirectory.toString());
-            props.put("buildCacheDirectory", buildCacheDirectory.toString());
-            props.put("buildOutputDirectory", buildOutputDirectory.toString());
+            if (commonDir != null) {
+                props.put("git.commonDir", commonDir);
+            }
+            props.put("workspace.id", workspaceId);
+            props.put("workspace.discriminator", workspaceDiscriminator);
             ArrayList<Workspace> linkedWorkspaces = new ArrayList<>();
             if (config.isWorktreeJoined() && commonDir != null) {
                 Path commonProjectDir = Paths.get(commonDir);
@@ -133,7 +134,7 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
             // TODO: discriminator
             return Optional.of(new DefaultWorkspace(
                     workspaceId,
-                    workspaceId,
+                    workspaceDiscriminator,
                     props,
                     projectDirectory,
                     buildCacheDirectory,
@@ -149,7 +150,7 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
             if (cache) {
                 return projectDirectory.resolve(".mvn-local").resolve("cache");
             } else {
-                return projectDirectory.resolve(".mvn-local").resolve("build").resolve(workspaceId);
+                return projectDirectory.resolve(".mvn-local").resolve("build");
             }
         } else if (scope == Config.Scope.USER) {
             if (cache) {

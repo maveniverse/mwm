@@ -61,13 +61,25 @@ public abstract class AbstractMojoSupport extends AbstractMojo {
     }
 
     protected void dumpWorkspace(Workspace workspace) {
-        logger.info("WS ID     = {}", workspace.workspaceId());
-        logger.info("WS DIS    = {}", workspace.discriminator());
-        logger.info("WS cache  = {}", workspace.buildCacheDirectory());
-        logger.info("WS output = {}", workspace.buildOutputDirectory());
-        logger.info("--------------");
-        logger.info("Considered properties:");
-        workspace.properties().forEach((key, value) -> logger.info("{} = {}", key, value));
-        logger.info("--------------");
+        dumpWorkspace("", workspace);
+    }
+
+    private void dumpWorkspace(String indent, Workspace workspace) {
+        logger.info("{}WS ID     = {}", indent, workspace.workspaceId());
+        logger.info("{}WS DIS    = {}", indent, workspace.discriminator());
+        logger.info("{}WS cache  = {}", indent, workspace.buildCacheDirectory());
+        logger.info("{}WS output = {}", indent, workspace.buildOutputDirectory());
+        logger.info("{}----------------------", indent);
+        logger.info("{}Considered properties:", indent);
+        workspace.properties().entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .forEach(e -> logger.info("{}{} = {}", indent, e.getKey(), e.getValue()));
+        logger.info("{}----------------------", indent);
+        if (!workspace.linkedWorkspaces().isEmpty()) {
+            logger.info("{}Linked workspaces:", indent);
+            for (Workspace w : workspace.linkedWorkspaces()) {
+                dumpWorkspace(indent + "  ", w);
+            }
+        }
     }
 }

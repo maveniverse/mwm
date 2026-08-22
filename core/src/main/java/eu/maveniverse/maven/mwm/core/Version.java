@@ -24,11 +24,6 @@ public final class Version {
         return loadClasspathProperties("eu.maveniverse.maven.mwm", "core").getOrDefault("version", UNKNOWN);
     }
 
-    public static String resolverVersion() {
-        return loadClasspathProperties("org.apache.maven.resolver", "maven-resolver-api")
-                .getOrDefault("version", UNKNOWN);
-    }
-
     public static Map<String, String> loadClasspathProperties(String groupId, String artifactId) {
         String resource = "/META-INF/maven/" + groupId + "/" + artifactId + "/pom.properties";
         final Properties props = new Properties();
