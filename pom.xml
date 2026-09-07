@@ -82,7 +82,7 @@
     <version.maven40Resolver>2.0.21</version.maven40Resolver>
 
     <!-- We use lowest SLF4J; they are binary compat -->
-    <version.slf4j>1.7.36</version.slf4j>
+    <version.slf4j>2.0.19</version.slf4j>
 
   </properties>
 
