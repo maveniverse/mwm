@@ -17,16 +17,17 @@ import java.util.EnumSet;
  */
 public interface Config {
     /**
-     * Special "maven local" directory; should be git-ignored just like target is.
+     * Special "maven target" directory; should be git-ignored just like target is.
+     * This same directory is used by Maven 4 as well (but different layout).
      */
-    String MVN_LOCAL = ".mvn-local";
+    String MVN_TARGET = ".mvn/target";
 
     /**
      * Project scoped, user scoped.
      */
     enum Scope {
         /**
-         * Content is kept with project in {@code .mvn-local/[cached|installed]} directory.
+         * Content is kept with project in {@code .mvn/target/[cached|installed]} directory.
          */
         PROJECT,
         /**

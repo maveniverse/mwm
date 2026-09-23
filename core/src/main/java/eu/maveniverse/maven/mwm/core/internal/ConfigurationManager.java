@@ -32,19 +32,19 @@ public class ConfigurationManager {
     /**
      * Loads the configuration file, in this order:
      * <ul>
-     *     <li>from passed in {@code projectDirectory} as {@code .mvn-local/mwm.properties}</li>
+     *     <li>from passed in {@code projectDirectory} as {@code .mvn/target/mwm.properties}</li>
      *     <li>if not found, and properties contains {@code nisse.jgit.commonDir}, then try from there (from path as above)</li>
      *     <li>if not found, from {@code ~/.m2/mwm.properties}</li>
      * </ul>
      */
     public Config getConfig(Path projectDirectory, Map<String, String> properties) throws IOException {
         Optional<Map<String, String>> config =
-                load(projectDirectory.resolve(Config.MVN_LOCAL).resolve(CONFIG_FILE));
+                load(projectDirectory.resolve(Config.MVN_TARGET).resolve(CONFIG_FILE));
         if (!config.isPresent()) {
             if (properties.containsKey(PropertiesManager.KEY_COMMON_DIR)) {
                 config = load(Paths.get(properties.get(PropertiesManager.KEY_COMMON_DIR))
                         .getParent()
-                        .resolve(Config.MVN_LOCAL)
+                        .resolve(Config.MVN_TARGET)
                         .resolve(CONFIG_FILE));
             }
             if (!config.isPresent()) {
@@ -57,11 +57,11 @@ public class ConfigurationManager {
     }
 
     public Optional<Map<String, String>> loadWorkspace(Path projectDirectory) throws IOException {
-        return load(projectDirectory.resolve(Config.MVN_LOCAL).resolve(WORKSPACE_FILE));
+        return load(projectDirectory.resolve(Config.MVN_TARGET).resolve(WORKSPACE_FILE));
     }
 
     public void saveWorkspace(Path projectDirectory, Map<String, String> properties) throws IOException {
-        save(projectDirectory.resolve(Config.MVN_LOCAL).resolve(WORKSPACE_FILE), properties);
+        save(projectDirectory.resolve(Config.MVN_TARGET).resolve(WORKSPACE_FILE), properties);
     }
 
     private Optional<Map<String, String>> load(Path file) throws IOException {

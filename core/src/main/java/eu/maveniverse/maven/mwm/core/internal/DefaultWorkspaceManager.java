@@ -230,9 +230,9 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
             String workspaceId) {
         if (scope == Config.Scope.PROJECT) {
             if (cache) {
-                return projectDirectory.resolve(Config.MVN_LOCAL).resolve(config.cachedDir());
+                return projectDirectory.resolve(Config.MVN_TARGET).resolve(config.cachedDir());
             } else {
-                return projectDirectory.resolve(Config.MVN_LOCAL).resolve(config.installedDir());
+                return projectDirectory.resolve(Config.MVN_TARGET).resolve(config.installedDir());
             }
         } else if (scope == Config.Scope.USER_SCOPED) {
             if (cache) {
