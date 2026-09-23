@@ -81,8 +81,8 @@
     <version.maven40>4.0.0-rc-6</version.maven40>
     <version.maven40Resolver>2.0.23</version.maven40Resolver>
 
-    <!-- We use lowest SLF4J; they are binary compat -->
-    <version.slf4j>1.7.36</version.slf4j>
+    <!-- Maven 3.10+ is on SLF4J 2.0.x -->
+    <version.slf4j>2.0.19</version.slf4j>
 
   </properties>
 
