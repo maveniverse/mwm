@@ -14,5 +14,5 @@ def exec(String cmd){
 println basedir.list()
 exec('git init -b my-branch')
 exec('git add .')
-exec('git commit -m initial')
+exec('git -c user.name="It Tester" -c user.email="mwm@maveniverse.eu" commit -m initial')
 exec('git remote add origin https://github.com/maveniverse/mwm.git')
