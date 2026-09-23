@@ -57,15 +57,21 @@ public class PropertiesManager {
      */
     public Optional<Map<String, String>> maySeedProperties(Path projectDirectory, Map<String, String> properties) {
         HashMap<String, String> props = new HashMap<>(properties);
+        Map<String, String> nisseProps = null;
         if (!props.containsKey(KEY_REMOTE_NAME)
                 || !props.containsKey(KEY_REMOTE_URL)
                 || !props.containsKey(KEY_BRANCH_NAME)) {
             logger.debug("Nisse properties absent; running Nisse");
-            props.putAll(nisseProperties(projectDirectory, props));
+            nisseProps = nisseProperties(projectDirectory, props);
+            props.putAll(nisseProps);
         }
         if (!props.containsKey(KEY_REMOTE_NAME)
                 || !props.containsKey(KEY_REMOTE_URL)
                 || !props.containsKey(KEY_BRANCH_NAME)) {
+            if (nisseProps != null) {
+                logger.debug("Nisse collected following properties:");
+                nisseProps.forEach((k, v) -> logger.debug("{}: {}", k, v));
+            }
             logger.info("Nisse properties absent after running Nisse; bailing out");
             return Optional.empty();
         }
