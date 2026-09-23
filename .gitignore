@@ -2,7 +2,7 @@
 .project
 .settings/
 target/
-.mvn-local/
+.mvn/target/
 *.ser
 *.ec
 *.ipr
