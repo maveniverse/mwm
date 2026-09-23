@@ -10,5 +10,4 @@ assert buildLog.exists()
 String buildLogString = buildLog.text
 
 assert buildLogString.contains('[INFO] MWM workspace detected')
-// TODO: this below is not on CI
-// assert buildLogString.contains('MWM is active')
+assert buildLogString.contains('origin-github.com-maveniverse-mwm-my-branch')
