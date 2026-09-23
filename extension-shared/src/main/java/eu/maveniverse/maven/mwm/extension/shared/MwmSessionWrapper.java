@@ -25,6 +25,7 @@ import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.repository.LocalRepository;
 import org.eclipse.aether.repository.LocalRepositoryManager;
+import org.eclipse.aether.util.ConfigUtils;
 import org.eclipse.aether.util.repository.ChainedLocalRepositoryManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +33,8 @@ import org.slf4j.LoggerFactory;
 @Singleton
 @Named
 public final class MwmSessionWrapper {
+    private static final String MWM_SESSION_WRAPPER_ENABLED = "mwm.sessionWrapper.enabled";
+
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final RepositorySystem repositorySystem;
@@ -52,6 +55,10 @@ public final class MwmSessionWrapper {
     private Optional<LocalRepositoryManager> newLocalRepositoryManager(
             Path projectRoot, RepositorySystemSession.SessionBuilder builder) throws IOException {
         try (RepositorySystemSession.CloseableSession protoSession = builder.build()) {
+            if (!ConfigUtils.getBoolean(protoSession, true, MWM_SESSION_WRAPPER_ENABLED)) {
+                logger.warn("MWM Session Wrapper disabled");
+                return Optional.empty();
+            }
             if (protoSession.getLocalRepositoryManager() instanceof ChainedLocalRepositoryManager) {
                 logger.warn("Chained LRM detected; MWM is not interfering with it");
                 return Optional.empty();
