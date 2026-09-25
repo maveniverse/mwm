@@ -76,7 +76,7 @@
     <version.nisse>0.9.11</version.nisse>
 
     <!-- Maven + Resolver versions  -->
-    <version.maven310>3.10.0-rc-1</version.maven310>
+    <version.maven310>4.0.0-rc-7</version.maven310>
     <version.maven310Resolver>2.0.23</version.maven310Resolver>
     <version.maven40>4.0.0-rc-6</version.maven40>
     <version.maven40Resolver>2.0.23</version.maven40Resolver>
