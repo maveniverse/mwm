@@ -22,9 +22,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -47,25 +49,7 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
 
     @Override
     public Optional<Workspace> detectWorkspace(Path pd, Path ld, Map<String, String> properties) throws IOException {
-        Path projectDirectory = FileUtils.normalizePath(pd);
-        Path localRepository = FileUtils.normalizePath(ld);
-        Optional<Map<String, String>> propsOptional = propertiesManager.maySeedProperties(projectDirectory, properties);
-        if (propsOptional.isPresent()) {
-            Map<String, String> props = propsOptional.orElse(Collections.emptyMap());
-            final Config config = configurationManager.getConfig(projectDirectory, props);
-            if (config.getBuildOutputScope() != Config.Scope.USER || config.getBuildCacheScope() != Config.Scope.USER) {
-                Optional<Workspace> wo = detectWorkspace(config, projectDirectory, localRepository, props);
-                if (wo.isPresent()) {
-                    logger.debug("Workspace detected");
-                    return wo;
-                } else {
-                    logger.debug("No workspace detected");
-                }
-            } else {
-                logger.debug("MWM configured to not interfere");
-            }
-        }
-        return Optional.empty();
+        return doDetectWorkspace(new HashSet<>(), pd, ld, properties);
     }
 
     @Override
@@ -113,14 +97,54 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
         }
     }
 
+    private Optional<Workspace> doDetectWorkspace(
+            Set<Path> processedPds, Path pd, Path ld, Map<String, String> properties) throws IOException {
+        Path projectDirectory = FileUtils.normalizePath(pd);
+        Path localRepository = FileUtils.normalizePath(ld);
+        Optional<Map<String, String>> propsOptional = propertiesManager.maySeedProperties(projectDirectory, properties);
+        if (propsOptional.isPresent()) {
+            Map<String, String> props = propsOptional.orElse(Collections.emptyMap());
+            final Config config = configurationManager.getConfig(projectDirectory, props);
+            if (config.getBuildOutputScope() != Config.Scope.USER || config.getBuildCacheScope() != Config.Scope.USER) {
+                Optional<Workspace> wo =
+                        detectWorkspace(config, processedPds, projectDirectory, localRepository, props);
+                if (wo.isPresent()) {
+                    logger.debug("Workspace detected");
+                    return wo;
+                } else {
+                    logger.debug("No workspace detected");
+                }
+            } else {
+                logger.debug("MWM configured to not interfere");
+            }
+        }
+        return Optional.empty();
+    }
+
     private Optional<Workspace> workspaceReDetector(
-            Path projectDirectory, Path localRepository, Map<String, String> properties) throws IOException {
-        // cleanse to force Nisse invocation for another directory
-        return detectWorkspace(projectDirectory, localRepository, propertiesManager.cleanseProperties(properties));
+            Set<Path> processedProjectPaths,
+            Path projectDirectory,
+            Path localRepository,
+            Map<String, String> properties)
+            throws IOException {
+        if (processedProjectPaths.add(projectDirectory)) {
+            // cleanse to force Nisse invocation for another directory
+            return doDetectWorkspace(
+                    processedProjectPaths,
+                    projectDirectory,
+                    localRepository,
+                    propertiesManager.cleanseProperties(properties));
+        } else {
+            return Optional.empty();
+        }
     }
 
     private Optional<Workspace> detectWorkspace(
-            Config config, Path projectDirectory, Path localRepository, Map<String, String> properties)
+            Config config,
+            Set<Path> processedProjectPaths,
+            Path projectDirectory,
+            Path localRepository,
+            Map<String, String> properties)
             throws IOException {
         final String remoteName = properties.get(PropertiesManager.KEY_REMOTE_NAME);
         final String remoteUrl = properties.get(PropertiesManager.KEY_REMOTE_URL);
@@ -179,7 +203,8 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
                 if (Files.isDirectory(commonProjectDir)
                         && commonProjectDir.getParent() != null
                         && Files.isDirectory(commonProjectDir.getParent())) {
-                    workspaceReDetector(commonProjectDir.getParent(), localRepository, properties)
+                    workspaceReDetector(
+                                    processedProjectPaths, commonProjectDir.getParent(), localRepository, properties)
                             .ifPresent(linkedWorkspaces::add);
                 }
             }
@@ -188,7 +213,8 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
                 for (String link : links) {
                     Path projectDir = Paths.get(link);
                     if (Files.isDirectory(projectDir)) {
-                        Optional<Workspace> linkedWs = workspaceReDetector(projectDir, localRepository, properties);
+                        Optional<Workspace> linkedWs =
+                                workspaceReDetector(processedProjectPaths, projectDir, localRepository, properties);
                         if (linkedWs.isPresent()) {
                             linkedWorkspaces.add(linkedWs.get());
                         } else {
