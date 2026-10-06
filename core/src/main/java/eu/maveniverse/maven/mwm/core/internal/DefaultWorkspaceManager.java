@@ -221,14 +221,14 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
                             if (config.isLinkEnforced()) {
                                 throw new IOException("Linked workspace at path not found: " + link);
                             } else {
-                                logger.warn("Linked workspace at path not found: " + link);
+                                logger.warn("Linked workspace at path not found: {}", link);
                             }
                         }
                     } else {
                         if (config.isLinkEnforced()) {
                             throw new IOException("Stale workspace link to path: " + link);
                         } else {
-                            logger.warn("Stale workspace link to path: " + link);
+                            logger.warn("Stale workspace link to path: {}", link);
                         }
                     }
                 }
