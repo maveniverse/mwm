@@ -12,6 +12,7 @@ import static java.util.Objects.requireNonNull;
 import eu.maveniverse.maven.mwm.extension.shared.MwmSessionWrapper;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.Path;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -20,11 +21,14 @@ import org.apache.maven.internal.aether.DefaultRepositorySystemSessionFactory;
 import org.apache.maven.resolver.RepositorySystemSessionFactory;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.sisu.Priority;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Singleton
 @Named
 @Priority(100)
 final class MwmRepositorySystemSessionFactory implements RepositorySystemSessionFactory {
+    private final Logger logger = LoggerFactory.getLogger(MwmRepositorySystemSessionFactory.class);
     private final DefaultRepositorySystemSessionFactory defaultFactory;
     private final MwmSessionWrapper wrapper;
 
@@ -38,12 +42,23 @@ final class MwmRepositorySystemSessionFactory implements RepositorySystemSession
     @Override
     public RepositorySystemSession.SessionBuilder newRepositorySessionBuilder(
             MavenExecutionRequest mavenExecutionRequest) {
+        RepositorySystemSession.SessionBuilder builder =
+                defaultFactory.newRepositorySessionBuilder(mavenExecutionRequest);
+        Path rootDirectory;
         try {
-            return wrapper.wrap(
-                    mavenExecutionRequest.getRootDirectory(),
-                    defaultFactory.newRepositorySessionBuilder(mavenExecutionRequest));
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+            rootDirectory = mavenExecutionRequest.getRootDirectory();
+        } catch (IllegalStateException e) {
+            rootDirectory = null;
+        }
+        if (rootDirectory != null) {
+            try {
+                return wrapper.wrap(rootDirectory, builder);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        } else {
+            logger.debug("Project root is not discovered; MWM not usable");
+            return builder;
         }
     }
 }

@@ -56,11 +56,15 @@ public final class MwmSessionWrapper {
             Path projectRoot, RepositorySystemSession.SessionBuilder builder) throws IOException {
         try (RepositorySystemSession.CloseableSession protoSession = builder.build()) {
             if (!ConfigUtils.getBoolean(protoSession, true, MWM_SESSION_WRAPPER_ENABLED)) {
-                logger.warn("MWM Session Wrapper disabled");
+                logger.info("MWM Session Wrapper disabled");
+                return Optional.empty();
+            }
+            if (ConfigUtils.getBoolean(protoSession, false, "aether.lrm.enhanced.split")) {
+                logger.info("Split LRM enabled; MWM is not interfering with it");
                 return Optional.empty();
             }
             if (protoSession.getLocalRepositoryManager() instanceof ChainedLocalRepositoryManager) {
-                logger.warn("Chained LRM detected; MWM is not interfering with it");
+                logger.info("Chained LRM used; MWM is not interfering with it");
                 return Optional.empty();
             }
             if (protoSession.getLocalRepositoryManager() == null) {
