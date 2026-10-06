@@ -90,6 +90,18 @@ public final class MwmSessionWrapper {
                 // proto session shares data with "real" one
                 protoSession.getData().set(Workspace.class, workspace);
                 logger.info("Using MWM workspace: {}", workspace.workspaceId());
+                if (logger.isDebugEnabled()) {
+                    logger.debug("* cache  : {}", workspace.buildCacheDirectory());
+                    logger.debug("* install: {}", workspace.buildOutputDirectory());
+                    if (!workspace.linkedWorkspaces().isEmpty()) {
+                        logger.debug(
+                                "  Linked workspaces: {}",
+                                workspace.linkedWorkspaces().size());
+                        for (Workspace w : workspace.linkedWorkspaces()) {
+                            logger.debug("  * tail: {}", w.buildOutputDirectory());
+                        }
+                    }
+                }
                 LocalRepositoryManager head = repositorySystem.newLocalRepositoryManager(
                         protoSession, new LocalRepository(workspace.buildCacheDirectory()));
                 ArrayList<LocalRepositoryManager> tail = new ArrayList<>();
@@ -103,6 +115,15 @@ public final class MwmSessionWrapper {
                     tail.add(repositorySystem.newLocalRepositoryManager(
                             protoSession, new LocalRepository(linked.buildOutputDirectory())));
                     workspaces.addAll(linked.linkedWorkspaces());
+                }
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Chained LRM constructed as:");
+                    logger.debug(" - cache: {}", head.getRepository().getBasePath());
+                    logger.debug(" - install: {}", tail.get(0).getRepository().getBasePath());
+                    for (int i = 1; i < tail.size(); i++) {
+                        logger.debug(
+                                " - tail-{}: {}", i, tail.get(i).getRepository().getBasePath());
+                    }
                 }
                 return Optional.of(new ChainedLocalRepositoryManager(head, tail, false, 1, 0));
             }
