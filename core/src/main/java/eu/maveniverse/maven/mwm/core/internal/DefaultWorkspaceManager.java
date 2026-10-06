@@ -44,7 +44,7 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
     public DefaultWorkspaceManager(ConfigurationManager configurationManager, PropertiesManager propertiesManager) {
         this.configurationManager = requireNonNull(configurationManager);
         this.propertiesManager = requireNonNull(propertiesManager);
-        logger.info("MWM {}", Version.version());
+        logger.debug("MWM {}", Version.version());
     }
 
     @Override
