@@ -60,10 +60,7 @@ public final class MwmSessionWrapper {
                 return Optional.empty();
             }
             if (ConfigUtils.getBoolean(
-                    protoSession,
-                    false,
-                    "aether.lrm.enhanced.split",
-                    "aether.enhancedLocalRepository.split")) {
+                    protoSession, false, "aether.lrm.enhanced.split", "aether.enhancedLocalRepository.split")) {
                 logger.info("Split LRM enabled; MWM is not interfering with it");
                 return Optional.empty();
             }
