@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 @Singleton
 @Named
 public final class MwmSessionWrapper {
-    private static final String MWM_SESSION_WRAPPER_ENABLED = "mwm.sessionWrapper.enabled";
+    private static final String MWM_SESSION_WRAPPER_DISABLED = "mwm.disabled";
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -55,8 +55,8 @@ public final class MwmSessionWrapper {
     private Optional<LocalRepositoryManager> newLocalRepositoryManager(
             Path projectRoot, RepositorySystemSession.SessionBuilder builder) throws IOException {
         try (RepositorySystemSession.CloseableSession protoSession = builder.build()) {
-            if (!ConfigUtils.getBoolean(protoSession, true, MWM_SESSION_WRAPPER_ENABLED)) {
-                logger.info("MWM Session Wrapper disabled");
+            if (ConfigUtils.getBoolean(protoSession, true, MWM_SESSION_WRAPPER_DISABLED)) {
+                logger.info("MWM disabled");
                 return Optional.empty();
             }
             if (ConfigUtils.getBoolean(
