@@ -55,7 +55,7 @@ public final class MwmSessionWrapper {
     private Optional<LocalRepositoryManager> newLocalRepositoryManager(
             Path projectRoot, RepositorySystemSession.SessionBuilder builder) throws IOException {
         try (RepositorySystemSession.CloseableSession protoSession = builder.build()) {
-            if (ConfigUtils.getBoolean(protoSession, true, MWM_SESSION_WRAPPER_DISABLED)) {
+            if (ConfigUtils.getBoolean(protoSession, false, MWM_SESSION_WRAPPER_DISABLED)) {
                 logger.info("MWM disabled");
                 return Optional.empty();
             }
