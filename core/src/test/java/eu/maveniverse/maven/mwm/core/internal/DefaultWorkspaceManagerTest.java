@@ -10,6 +10,7 @@ package eu.maveniverse.maven.mwm.core.internal;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -19,7 +20,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -66,15 +66,59 @@ public class DefaultWorkspaceManagerTest {
         Workspace ws = wm.detectWorkspace(a, tmp.resolve("repo"), Collections.emptyMap(), true)
                 .orElseThrow(AssertionError::new);
 
-        List<String> seen = new ArrayList<>();
-        ArrayDeque<Workspace> queue = new ArrayDeque<>(ws.linkedWorkspaces());
-        while (!queue.isEmpty()) {
-            Workspace w = queue.pop();
-            seen.add(w.properties().get(Config.DiscriminatorElements.REPOSITORY.name()));
-            queue.addAll(w.linkedWorkspaces());
+        // cycle b -> a is cut; d is reachable from both b and c
+        assertEquals("a[b[d], c[d]]", tree(ws));
+    }
+
+    @Test
+    void directLinkKeepsNearestPosition(@TempDir Path tmp) throws IOException {
+        // a -> b, a -> d, b -> c, c -> d: d must stay a direct link of a, not only reached via b -> c
+        Path a = project(tmp, "a", "b", "d");
+        project(tmp, "b", "c");
+        project(tmp, "c", "d");
+        project(tmp, "d");
+
+        Workspace ws = workspaceManager()
+                .detectWorkspace(a, tmp.resolve("repo"), Collections.emptyMap(), false)
+                .orElseThrow(AssertionError::new);
+        assertEquals("a[b[c[d]], d]", tree(ws));
+    }
+
+    @Test
+    void enforcedLinkFailsEvenIfWorktreeParentFailed(@TempDir Path tmp) throws IOException {
+        // w is worktree of m, and also explicitly links m; m is not detectable
+        Path m = project(tmp, "m");
+        Files.createDirectories(m.resolve(".git"));
+        Path w = project(tmp, "w", "m");
+        DefaultWorkspaceManager wm =
+                new DefaultWorkspaceManager(new ConfigurationManager(), new PropertiesManager(c -> {
+                    Map<String, String> p = new HashMap<>();
+                    if (c.getSessionRootDirectory().getFileName().toString().equals("w")) {
+                        p.put(PropertiesManager.KEY_REMOTE_NAME, "origin");
+                        p.put(PropertiesManager.KEY_REMOTE_URL, "https://github.com/o/w.git");
+                        p.put(PropertiesManager.KEY_BRANCH_NAME, "main");
+                        p.put(
+                                PropertiesManager.KEY_COMMON_DIR,
+                                m.resolve(".git").toString());
+                    }
+                    return p;
+                }));
+
+        IOException e = assertThrows(
+                IOException.class, () -> wm.detectWorkspace(w, tmp.resolve("repo"), Collections.emptyMap(), false));
+        assertTrue(e.getMessage().startsWith("Linked workspace at path not found"), e.getMessage());
+    }
+
+    private static String tree(Workspace ws) {
+        String name = ws.properties().get(Config.DiscriminatorElements.REPOSITORY.name());
+        if (ws.linkedWorkspaces().isEmpty()) {
+            return name;
         }
-        seen.sort(null);
-        assertEquals(java.util.Arrays.asList("b", "c", "d"), seen);
+        List<String> children = new ArrayList<>();
+        for (Workspace l : ws.linkedWorkspaces()) {
+            children.add(tree(l));
+        }
+        return name + children;
     }
 
     @Test
@@ -101,7 +145,9 @@ public class DefaultWorkspaceManagerTest {
         Workspace ws = workspaceManager()
                 .detectWorkspace(project(tmp, "a"), tmp.resolve("repo"), props, false)
                 .orElseThrow(AssertionError::new);
-        assertEquals("origin-github.com-o-r-feature_x", ws.workspaceId());
+        assertTrue(ws.workspaceId().startsWith("origin-github.com-o-r-feature_x-"), ws.workspaceId());
+        assertEquals("feature_x", DefaultWorkspaceManager.pathSafe("feature_x"));
+        assertNotEquals(DefaultWorkspaceManager.pathSafe("feature/x"), DefaultWorkspaceManager.pathSafe("feature_x"));
         assertEquals("feature/x", ws.properties().get("git.branchName"));
     }
 

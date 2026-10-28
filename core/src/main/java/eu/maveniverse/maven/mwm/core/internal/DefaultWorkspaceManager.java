@@ -121,7 +121,19 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
             Set<Path> processedPds, Path pd, Path ld, Map<String, String> properties) throws IOException {
         Path projectDirectory = FileUtils.normalizePath(pd);
         Path localRepository = FileUtils.normalizePath(ld);
+        // processedPds is the current link path (cycle detection); a project reached via several links is
+        // detected for each, so every link keeps its own (nearest) position in the chain
         processedPds.add(projectDirectory);
+        try {
+            return detectOnPath(processedPds, projectDirectory, localRepository, properties);
+        } finally {
+            processedPds.remove(projectDirectory);
+        }
+    }
+
+    private Optional<Workspace> detectOnPath(
+            Set<Path> processedPds, Path projectDirectory, Path localRepository, Map<String, String> properties)
+            throws IOException {
         Optional<Map<String, String>> propsOptional = propertiesManager.maySeedProperties(projectDirectory, properties);
         if (propsOptional.isPresent()) {
             Map<String, String> props = propsOptional.orElse(Collections.emptyMap());
@@ -154,6 +166,16 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
                 projectDirectory,
                 localRepository,
                 propertiesManager.cleanseProperties(properties));
+    }
+
+    /**
+     * Makes value safe to be used as directory name. If value had to be altered, a hash of original is appended to
+     * keep values like {@code feature/x} and {@code feature_x} distinct.
+     */
+    static String pathSafe(String value) {
+        String safe = value.replaceAll("[^A-Za-z0-9._-]", "_");
+        // ponytail: String.hashCode is specified by JLS, so stable across JVMs; 32 bits is plenty for branch names
+        return safe.equals(value) ? safe : safe + "-" + String.format("%08x", value.hashCode());
     }
 
     /**
@@ -207,7 +229,7 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
             ArrayList<String> workspaceDiscriminatorArr = new ArrayList<>();
             for (Config.DiscriminatorElements e : Config.DiscriminatorElements.values()) {
                 // ID is used as directory name: branch "feature/x" must not create nested directories
-                String part = elems.get(e.name()).replaceAll("[^A-Za-z0-9._-]", "_");
+                String part = pathSafe(elems.get(e.name()));
                 workspaceIdArr.add(part);
                 if (config.getDiscriminatorElements().contains(e)) {
                     workspaceDiscriminatorArr.add(part);
@@ -247,8 +269,8 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
                 for (String link : links) {
                     Path projectDir = Paths.get(link);
                     if (processedProjectPaths.contains(FileUtils.normalizePath(projectDir))) {
-                        // cycle or diamond: already part of this chain
-                        logger.debug("Linked workspace already processed: {}", link);
+                        // cycle: already on current link path
+                        logger.debug("Linked workspace cycle: {}", link);
                     } else if (Files.isDirectory(projectDir)) {
                         Optional<Workspace> linkedWs =
                                 workspaceReDetector(processedProjectPaths, projectDir, localRepository, properties);
