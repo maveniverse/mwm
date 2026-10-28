@@ -45,6 +45,8 @@ public class ConfigImpl implements Config {
         if (config.containsKey(DISCRIMINATOR_ELEMENTS)) {
             EnumSet<DiscriminatorElements> res = EnumSet.noneOf(DiscriminatorElements.class);
             Arrays.stream(config.get(DISCRIMINATOR_ELEMENTS).split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
                     .forEach(s -> res.add(DiscriminatorElements.valueOf(s.toUpperCase(Locale.ROOT))));
             return res;
         }

@@ -20,7 +20,7 @@ import org.apache.maven.plugins.annotations.Parameter;
  */
 @Mojo(name = "link", threadSafe = true, requiresProject = false)
 public class LinkMojo extends AbstractMojoSupport {
-    @Parameter(property = "mwm.other")
+    @Parameter(property = "mwm.other", required = true)
     private String other;
 
     @Override
@@ -33,11 +33,14 @@ public class LinkMojo extends AbstractMojoSupport {
                         "basedir",
                         FileUtils.discoverUserCurrentWorkingDirectory().toString());
                 Optional<Workspace> otherWs = workspaceManager.detectWorkspace(
-                        basedir.resolve(other), ws.localRepository(), getConfigPropertiesAsString());
+                        basedir.resolve(other), ws.localRepository(), getConfigPropertiesAsString(), false);
                 if (otherWs.isPresent()) {
                     Workspace ot = otherWs.orElseThrow(() -> new MojoExecutionException("value not present"));
-                    workspaceManager.linkWorkspace(ws, ot);
-                    logger.info("Workspace {} linked with {}", ws.workspaceId(), ot.workspaceId());
+                    if (workspaceManager.linkWorkspace(ws, ot)) {
+                        logger.info("Workspace {} linked with {}", ws.workspaceId(), ot.workspaceId());
+                    } else {
+                        logger.info("Workspace {} was already linked with {}", ws.workspaceId(), ot.workspaceId());
+                    }
                 } else {
                     logger.info("Other Workspace {} not found", other);
                 }
@@ -45,7 +48,7 @@ public class LinkMojo extends AbstractMojoSupport {
                 logger.info("Workspace not found.");
             }
         } catch (Exception e) {
-            throw new MojoExecutionException("Error while detecting MWM status", e);
+            throw new MojoExecutionException("Error while linking MWM workspace", e);
         }
     }
 }

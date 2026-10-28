@@ -89,7 +89,7 @@ public final class MwmSessionWrapper {
                 }
             });
             Workspace workspace = workspaceManager
-                    .detectWorkspace(projectRoot, localRepository, configProperties)
+                    .detectWorkspace(projectRoot, localRepository, configProperties, true)
                     .orElse(null);
             if (workspace != null) {
                 // proto session shares data with "real" one
@@ -113,7 +113,7 @@ public final class MwmSessionWrapper {
                 tail.add(repositorySystem.newLocalRepositoryManager(
                         protoSession, new LocalRepository(workspace.buildOutputDirectory())));
 
-                // collect and recursively (in depth-order) add all linked workspaces as tail
+                // collect and recursively (breadth-first: nearest links first) add all linked workspaces as tail
                 ArrayDeque<Workspace> workspaces = new ArrayDeque<>(workspace.linkedWorkspaces());
                 while (!workspaces.isEmpty()) {
                     Workspace linked = workspaces.pop();

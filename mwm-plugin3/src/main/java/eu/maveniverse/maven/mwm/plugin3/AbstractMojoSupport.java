@@ -10,6 +10,7 @@ package eu.maveniverse.maven.mwm.plugin3;
 import eu.maveniverse.maven.mwm.core.Workspace;
 import eu.maveniverse.maven.mwm.core.WorkspaceManager;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -45,19 +46,24 @@ public abstract class AbstractMojoSupport extends AbstractMojo {
         Workspace workspace =
                 (Workspace) mavenSession.getRepositorySession().getData().get(Workspace.class);
         if (workspace == null) {
-            Optional<Workspace> wo = workspaceManager.detectWorkspace(
-                    mavenSession.getRequest().getMultiModuleProjectDirectory().toPath(),
+            // same root as extension uses; plugin only detects, never persists
+            Path rootDirectory;
+            try {
+                rootDirectory = mavenSession.getRequest().getRootDirectory();
+            } catch (IllegalStateException e) {
+                return Optional.empty();
+            }
+            return workspaceManager.detectWorkspace(
+                    rootDirectory,
                     mavenSession
                             .getRepositorySession()
                             .getLocalRepository()
                             .getBasedir()
                             .toPath(),
-                    getConfigPropertiesAsString());
-            if (wo.isPresent()) {
-                workspace = wo.orElseThrow(() -> new IllegalStateException("Workspace not found"));
-            }
+                    getConfigPropertiesAsString(),
+                    false);
         }
-        return Optional.ofNullable(workspace);
+        return Optional.of(workspace);
     }
 
     protected void dumpWorkspace(Workspace workspace) {
