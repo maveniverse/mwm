@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -89,7 +90,7 @@ public final class MwmSessionWrapper {
                 }
             });
             Workspace workspace = workspaceManager
-                    .detectWorkspace(projectRoot, localRepository, configProperties)
+                    .detectWorkspace(projectRoot, localRepository, configProperties, true)
                     .orElse(null);
             if (workspace != null) {
                 // proto session shares data with "real" one
@@ -113,12 +114,17 @@ public final class MwmSessionWrapper {
                 tail.add(repositorySystem.newLocalRepositoryManager(
                         protoSession, new LocalRepository(workspace.buildOutputDirectory())));
 
-                // collect and recursively (in depth-order) add all linked workspaces as tail
+                // collect and recursively (breadth-first: nearest links first) add all linked workspaces as tail;
+                // a workspace reachable via several links is added once, at its nearest position
+                HashSet<Path> seen = new HashSet<>();
+                seen.add(workspace.buildOutputDirectory());
                 ArrayDeque<Workspace> workspaces = new ArrayDeque<>(workspace.linkedWorkspaces());
                 while (!workspaces.isEmpty()) {
                     Workspace linked = workspaces.pop();
-                    tail.add(repositorySystem.newLocalRepositoryManager(
-                            protoSession, new LocalRepository(linked.buildOutputDirectory())));
+                    if (seen.add(linked.buildOutputDirectory())) {
+                        tail.add(repositorySystem.newLocalRepositoryManager(
+                                protoSession, new LocalRepository(linked.buildOutputDirectory())));
+                    }
                     workspaces.addAll(linked.linkedWorkspaces());
                 }
                 if (logger.isDebugEnabled()) {

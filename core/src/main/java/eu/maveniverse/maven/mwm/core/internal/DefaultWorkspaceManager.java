@@ -36,6 +36,8 @@ import org.slf4j.LoggerFactory;
 @Singleton
 @Named
 public class DefaultWorkspaceManager implements WorkspaceManager {
+    private static final String WORKSPACE_LINKS = "workspace.links";
+
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final ConfigurationManager configurationManager;
     private final PropertiesManager propertiesManager;
@@ -48,52 +50,70 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
     }
 
     @Override
-    public Optional<Workspace> detectWorkspace(Path pd, Path ld, Map<String, String> properties) throws IOException {
-        return doDetectWorkspace(new HashSet<>(), pd, ld, properties);
+    public Optional<Workspace> detectWorkspace(Path pd, Path ld, Map<String, String> properties, boolean persist)
+            throws IOException {
+        Optional<Workspace> workspace = doDetectWorkspace(new HashSet<>(), pd, ld, properties);
+        if (persist && workspace.isPresent()) {
+            persistWorkspace(workspace.get());
+        }
+        return workspace;
     }
 
-    @Override
-    public void linkWorkspace(Workspace target, Workspace other) throws IOException {
-        Optional<Map<String, String>> t = configurationManager.loadWorkspace(target.projectDirectory());
-        if (t.isPresent()) {
-            Map<String, String> props = t.get();
-            if (props.containsKey("workspace.links")) {
-                props.put(
-                        "workspace.links",
-                        props.get("workspace.links") + ","
-                                + other.projectDirectory().toString());
-            } else {
-                props.put("workspace.links", other.projectDirectory().toString());
-            }
-            configurationManager.saveWorkspace(target.projectDirectory(), props);
-        } else {
-            throw new IOException("Target Workspace not found");
+    /**
+     * Saves workspace (and linked ones) properties, if changed.
+     */
+    private void persistWorkspace(Workspace workspace) throws IOException {
+        if (!configurationManager
+                .loadWorkspace(workspace.projectDirectory())
+                .equals(Optional.of(workspace.properties()))) {
+            configurationManager.saveWorkspace(workspace.projectDirectory(), workspace.properties());
+        }
+        for (Workspace linked : workspace.linkedWorkspaces()) {
+            persistWorkspace(linked);
         }
     }
 
     @Override
-    public boolean unlinkWorkspace(Workspace target, Workspace other) throws IOException {
-        Optional<Map<String, String>> t = configurationManager.loadWorkspace(target.projectDirectory());
-        if (t.isPresent()) {
-            Map<String, String> props = t.get();
-            if (props.containsKey("workspace.links")) {
-                List<String> links = new ArrayList<>(
-                        Arrays.asList(props.get("workspace.links").split(",")));
-                boolean res = links.remove(other.projectDirectory().toString());
-                if (res) {
-                    if (links.isEmpty()) {
-                        props.remove("workspace.links");
-                    } else {
-                        props.put("workspace.links", String.join(",", links));
-                    }
-                    configurationManager.saveWorkspace(target.projectDirectory(), props);
-                }
-                return res;
-            } else {
+    public boolean linkWorkspace(Workspace target, Workspace other) throws IOException {
+        if (target.projectDirectory().equals(other.projectDirectory())) {
+            throw new IOException("Cannot link Workspace to itself");
+        }
+        // target may have never been persisted (ie. detected by plugin only)
+        Map<String, String> props =
+                configurationManager.loadWorkspace(target.projectDirectory()).orElseGet(HashMap::new);
+        String link = other.projectDirectory().toString();
+        if (props.containsKey(WORKSPACE_LINKS)) {
+            List<String> links = Arrays.asList(props.get(WORKSPACE_LINKS).split(","));
+            if (links.contains(link)) {
                 return false;
             }
+            props.put(WORKSPACE_LINKS, props.get(WORKSPACE_LINKS) + "," + link);
         } else {
-            throw new IOException("Target Workspace not found");
+            props.put(WORKSPACE_LINKS, link);
+        }
+        configurationManager.saveWorkspace(target.projectDirectory(), props);
+        return true;
+    }
+
+    @Override
+    public boolean unlinkWorkspace(Workspace target, Workspace other) throws IOException {
+        Map<String, String> props =
+                configurationManager.loadWorkspace(target.projectDirectory()).orElseGet(HashMap::new);
+        if (props.containsKey(WORKSPACE_LINKS)) {
+            List<String> links =
+                    new ArrayList<>(Arrays.asList(props.get(WORKSPACE_LINKS).split(",")));
+            boolean res = links.remove(other.projectDirectory().toString());
+            if (res) {
+                if (links.isEmpty()) {
+                    props.remove(WORKSPACE_LINKS);
+                } else {
+                    props.put(WORKSPACE_LINKS, String.join(",", links));
+                }
+                configurationManager.saveWorkspace(target.projectDirectory(), props);
+            }
+            return res;
+        } else {
+            return false;
         }
     }
 
@@ -101,6 +121,19 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
             Set<Path> processedPds, Path pd, Path ld, Map<String, String> properties) throws IOException {
         Path projectDirectory = FileUtils.normalizePath(pd);
         Path localRepository = FileUtils.normalizePath(ld);
+        // processedPds is the current link path (cycle detection); a project reached via several links is
+        // detected for each, so every link keeps its own (nearest) position in the chain
+        processedPds.add(projectDirectory);
+        try {
+            return detectOnPath(processedPds, projectDirectory, localRepository, properties);
+        } finally {
+            processedPds.remove(projectDirectory);
+        }
+    }
+
+    private Optional<Workspace> detectOnPath(
+            Set<Path> processedPds, Path projectDirectory, Path localRepository, Map<String, String> properties)
+            throws IOException {
         Optional<Map<String, String>> propsOptional = propertiesManager.maySeedProperties(projectDirectory, properties);
         if (propsOptional.isPresent()) {
             Map<String, String> props = propsOptional.orElse(Collections.emptyMap());
@@ -127,16 +160,36 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
             Path localRepository,
             Map<String, String> properties)
             throws IOException {
-        if (processedProjectPaths.add(projectDirectory)) {
-            // cleanse to force Nisse invocation for another directory
-            return doDetectWorkspace(
-                    processedProjectPaths,
-                    projectDirectory,
-                    localRepository,
-                    propertiesManager.cleanseProperties(properties));
-        } else {
-            return Optional.empty();
+        // cleanse to force Nisse invocation for another directory
+        return doDetectWorkspace(
+                processedProjectPaths,
+                projectDirectory,
+                localRepository,
+                propertiesManager.cleanseProperties(properties));
+    }
+
+    /**
+     * Makes value safe to be used as directory name. If value had to be altered, a hash of original is appended to
+     * keep values like {@code feature/x} and {@code feature_x} distinct.
+     */
+    static String pathSafe(String value) {
+        String safe = value.replaceAll("[^A-Za-z0-9._-]", "_");
+        // ponytail: String.hashCode is specified by JLS, so stable across JVMs; 32 bits is plenty for branch names
+        return safe.equals(value) ? safe : safe + "-" + String.format("%08x", value.hashCode());
+    }
+
+    /**
+     * Parses remote URL into {@code [host, owner..., repository]}. Supports scp-like {@code git@host:owner/repo.git}
+     * and URL forms like {@code https://host/owner/repo.git} or {@code ssh://git@host:22/owner/repo.git}.
+     */
+    static String[] parseRemoteUrl(String remoteUrl) {
+        String url = remoteUrl.trim().replaceFirst("\\.git/?$", "");
+        boolean hasScheme = url.matches("^[a-zA-Z][a-zA-Z0-9+.-]*://.*");
+        url = url.replaceFirst("^[a-zA-Z][a-zA-Z0-9+.-]*://", "").replaceFirst("^[^@/]+@", "");
+        if (hasScheme) {
+            url = url.replaceFirst("^([^/:]+):\\d+/", "$1/"); // drop port
         }
+        return url.split("[/:]+");
     }
 
     private Optional<Workspace> detectWorkspace(
@@ -152,18 +205,18 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
         final String commonDir = properties.get(PropertiesManager.KEY_COMMON_DIR);
 
         if (remoteName != null && remoteUrl != null && branchName != null) {
-            // remoteUrl: git@github.com:maveniverse/mwm.git or https://github.com/example/repo.git
             // we want DiscriminatorElements elements
-            String[] shavenUrl = remoteUrl
-                    .replaceFirst("^(git@|https://)", "")
-                    .replaceFirst("\\.git$", "")
-                    .split("[/:]");
+            String[] shavenUrl = parseRemoteUrl(remoteUrl);
             if (shavenUrl.length < 3) {
                 return Optional.empty();
             }
 
-            Map<String, String> elems =
-                    configurationManager.loadWorkspace(projectDirectory).orElse(new HashMap<>());
+            // start fresh to not carry stale keys; only links are user state
+            Map<String, String> elems = new HashMap<>();
+            configurationManager
+                    .loadWorkspace(projectDirectory)
+                    .map(e -> e.get(WORKSPACE_LINKS))
+                    .ifPresent(l -> elems.put(WORKSPACE_LINKS, l));
             elems.put(Config.DiscriminatorElements.REMOTE.name(), remoteName);
             elems.put(Config.DiscriminatorElements.HOST.name(), shavenUrl[0]);
             elems.put(
@@ -175,9 +228,11 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
             ArrayList<String> workspaceIdArr = new ArrayList<>();
             ArrayList<String> workspaceDiscriminatorArr = new ArrayList<>();
             for (Config.DiscriminatorElements e : Config.DiscriminatorElements.values()) {
-                workspaceIdArr.add(elems.get(e.name()));
+                // ID is used as directory name: branch "feature/x" must not create nested directories
+                String part = pathSafe(elems.get(e.name()));
+                workspaceIdArr.add(part);
                 if (config.getDiscriminatorElements().contains(e)) {
-                    workspaceDiscriminatorArr.add(elems.get(e.name()));
+                    workspaceDiscriminatorArr.add(part);
                 }
             }
             final String workspaceId = String.join("-", workspaceIdArr);
@@ -202,17 +257,21 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
                 Path commonProjectDir = Paths.get(commonDir);
                 if (Files.isDirectory(commonProjectDir)
                         && commonProjectDir.getParent() != null
-                        && Files.isDirectory(commonProjectDir.getParent())) {
+                        && Files.isDirectory(commonProjectDir.getParent())
+                        && !processedProjectPaths.contains(FileUtils.normalizePath(commonProjectDir.getParent()))) {
                     workspaceReDetector(
                                     processedProjectPaths, commonProjectDir.getParent(), localRepository, properties)
                             .ifPresent(linkedWorkspaces::add);
                 }
             }
-            if (elems.containsKey("workspace.links")) {
-                String[] links = elems.get("workspace.links").split(",");
+            if (elems.containsKey(WORKSPACE_LINKS)) {
+                String[] links = elems.get(WORKSPACE_LINKS).split(",");
                 for (String link : links) {
                     Path projectDir = Paths.get(link);
-                    if (Files.isDirectory(projectDir)) {
+                    if (processedProjectPaths.contains(FileUtils.normalizePath(projectDir))) {
+                        // cycle: already on current link path
+                        logger.debug("Linked workspace cycle: {}", link);
+                    } else if (Files.isDirectory(projectDir)) {
                         Optional<Workspace> linkedWs =
                                 workspaceReDetector(processedProjectPaths, projectDir, localRepository, properties);
                         if (linkedWs.isPresent()) {
@@ -233,7 +292,6 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
                     }
                 }
             }
-            configurationManager.saveWorkspace(projectDirectory, elems);
             return Optional.of(new WorkspaceImpl(
                     workspaceId,
                     workspaceDiscriminator,

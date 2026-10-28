@@ -48,9 +48,8 @@ public class ConfigurationManager {
                         .resolve(CONFIG_FILE));
             }
             if (!config.isPresent()) {
-                config = load(FileUtils.discoverUserCurrentWorkingDirectory()
-                        .resolve(".m2")
-                        .resolve(CONFIG_FILE));
+                config = load(
+                        FileUtils.discoverUserHomeDirectory().resolve(".m2").resolve(CONFIG_FILE));
             }
         }
         return new ConfigImpl(config.orElse(new HashMap<>()));

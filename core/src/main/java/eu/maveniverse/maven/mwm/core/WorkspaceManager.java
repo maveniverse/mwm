@@ -17,15 +17,17 @@ import java.util.Optional;
  */
 public interface WorkspaceManager {
     /**
-     * Detects and may create a workspace handle.
+     * Detects a workspace handle. If {@code persist}, the detected workspace (and linked ones) properties are saved
+     * into {@code .mvn/target/workspace.properties}, if changed.
      */
-    Optional<Workspace> detectWorkspace(Path projectDirectory, Path localRepository, Map<String, String> properties)
+    Optional<Workspace> detectWorkspace(
+            Path projectDirectory, Path localRepository, Map<String, String> properties, boolean persist)
             throws IOException;
 
     /**
-     * Links {@code other} workspace to {@code target} workspace.
+     * Links {@code other} workspace to {@code target} workspace. Returns {@code false} if already linked.
      */
-    void linkWorkspace(Workspace target, Workspace other) throws IOException;
+    boolean linkWorkspace(Workspace target, Workspace other) throws IOException;
 
     /**
      * Unlinks {@code other} workspace from {@code target} workspace.

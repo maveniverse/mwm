@@ -20,7 +20,7 @@ import org.apache.maven.plugins.annotations.Parameter;
  */
 @Mojo(name = "unlink", threadSafe = true, requiresProject = false)
 public class UnlinkMojo extends AbstractMojoSupport {
-    @Parameter(property = "mwm.other")
+    @Parameter(property = "mwm.other", required = true)
     private String other;
 
     @Override
@@ -33,7 +33,7 @@ public class UnlinkMojo extends AbstractMojoSupport {
                         "basedir",
                         FileUtils.discoverUserCurrentWorkingDirectory().toString());
                 Optional<Workspace> otherWs = workspaceManager.detectWorkspace(
-                        basedir.resolve(other), ws.localRepository(), getConfigPropertiesAsString());
+                        basedir.resolve(other), ws.localRepository(), getConfigPropertiesAsString(), false);
                 if (otherWs.isPresent()) {
                     Workspace ot = otherWs.orElseThrow(() -> new MojoExecutionException("value not present"));
                     if (workspaceManager.unlinkWorkspace(ws, ot)) {
@@ -48,7 +48,7 @@ public class UnlinkMojo extends AbstractMojoSupport {
                 logger.info("Workspace not found.");
             }
         } catch (Exception e) {
-            throw new MojoExecutionException("Error while detecting MWM status", e);
+            throw new MojoExecutionException("Error while unlinking MWM workspace", e);
         }
     }
 }
