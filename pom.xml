@@ -72,7 +72,7 @@
     <requireRuntimeMavenVersion.range>[3.10.0-rc-1,)</requireRuntimeMavenVersion.range>
 
     <version.sisu>1.1.0</version.sisu>
-    <version.maveniverseShared>0.2.6</version.maveniverseShared>
+    <version.maveniverseShared>0.2.7</version.maveniverseShared>
     <version.nisse>0.9.11</version.nisse>
 
     <!-- Maven + Resolver versions  -->
