@@ -64,9 +64,10 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
      */
     private void persistWorkspace(Workspace workspace) throws IOException {
         if (!configurationManager
-                .loadWorkspace(workspace.projectDirectory())
+                .loadWorkspace(workspace.workspaceId(), workspace.projectDirectory())
                 .equals(Optional.of(workspace.properties()))) {
-            configurationManager.saveWorkspace(workspace.projectDirectory(), workspace.properties());
+            configurationManager.saveWorkspace(
+                    workspace.workspaceId(), workspace.projectDirectory(), workspace.properties());
         }
         for (Workspace linked : workspace.linkedWorkspaces()) {
             persistWorkspace(linked);
@@ -79,8 +80,9 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
             throw new IOException("Cannot link Workspace to itself");
         }
         // target may have never been persisted (ie. detected by plugin only)
-        Map<String, String> props =
-                configurationManager.loadWorkspace(target.projectDirectory()).orElseGet(HashMap::new);
+        Map<String, String> props = configurationManager
+                .loadWorkspace(target.workspaceId(), target.projectDirectory())
+                .orElseGet(HashMap::new);
         String link = other.projectDirectory().toString();
         if (props.containsKey(WORKSPACE_LINKS)) {
             List<String> links = Arrays.asList(props.get(WORKSPACE_LINKS).split(","));
@@ -91,14 +93,15 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
         } else {
             props.put(WORKSPACE_LINKS, link);
         }
-        configurationManager.saveWorkspace(target.projectDirectory(), props);
+        configurationManager.saveWorkspace(target.workspaceId(), target.projectDirectory(), props);
         return true;
     }
 
     @Override
     public boolean unlinkWorkspace(Workspace target, Workspace other) throws IOException {
-        Map<String, String> props =
-                configurationManager.loadWorkspace(target.projectDirectory()).orElseGet(HashMap::new);
+        Map<String, String> props = configurationManager
+                .loadWorkspace(target.workspaceId(), target.projectDirectory())
+                .orElseGet(HashMap::new);
         if (props.containsKey(WORKSPACE_LINKS)) {
             List<String> links =
                     new ArrayList<>(Arrays.asList(props.get(WORKSPACE_LINKS).split(",")));
@@ -109,7 +112,7 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
                 } else {
                     props.put(WORKSPACE_LINKS, String.join(",", links));
                 }
-                configurationManager.saveWorkspace(target.projectDirectory(), props);
+                configurationManager.saveWorkspace(target.workspaceId(), target.projectDirectory(), props);
             }
             return res;
         } else {
@@ -213,10 +216,6 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
 
             // start fresh to not carry stale keys; only links are user state
             Map<String, String> elems = new HashMap<>();
-            configurationManager
-                    .loadWorkspace(projectDirectory)
-                    .map(e -> e.get(WORKSPACE_LINKS))
-                    .ifPresent(l -> elems.put(WORKSPACE_LINKS, l));
             elems.put(Config.DiscriminatorElements.REMOTE.name(), remoteName);
             elems.put(Config.DiscriminatorElements.HOST.name(), shavenUrl[0]);
             elems.put(
@@ -239,16 +238,6 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
             final String workspaceDiscriminator = String.join("-", workspaceDiscriminatorArr);
             logger.debug("WS {} ({})", workspaceId, workspaceDiscriminator);
 
-            final String pathSegment;
-            Config.WSKey key = config.getWSKey();
-            if (key == Config.WSKey.ID) {
-                pathSegment = workspaceId;
-            } else if (key == Config.WSKey.DISCRIMINATOR) {
-                pathSegment = workspaceDiscriminator;
-            } else {
-                throw new IllegalArgumentException("Invalid WSKey provided: " + key);
-            }
-
             Map<String, String> effConfig = config.config();
 
             Config.Scope buildCacheScope = config.getBuildCacheScope();
@@ -259,12 +248,22 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
             Config.Scope buildOutputScope = config.getBuildOutputScope();
             if (buildOutputScope == Config.Scope.AUTO) {
                 if (commonDir != null) {
-                    buildOutputScope = Config.Scope.PROJECT_LOCAL;
-                    effConfig.put(ConfigImpl.BUILD_OUTPUT_SCOPE, Config.Scope.PROJECT_LOCAL.name());
+                    buildOutputScope = Config.Scope.PROJECT;
+                    effConfig.put(ConfigImpl.BUILD_OUTPUT_SCOPE, Config.Scope.PROJECT.name());
                 } else {
                     buildOutputScope = Config.Scope.USER;
                     effConfig.put(ConfigImpl.BUILD_OUTPUT_SCOPE, Config.Scope.USER.name());
                 }
+            }
+
+            final String pathSegment;
+            Config.WSKey key = config.getWSKey();
+            if (key == Config.WSKey.ID) {
+                pathSegment = workspaceId;
+            } else if (key == Config.WSKey.DISCRIMINATOR) {
+                pathSegment = workspaceDiscriminator;
+            } else {
+                throw new IllegalArgumentException("Invalid WSKey provided: " + key);
             }
 
             final Path buildCacheDirectory =
@@ -292,6 +291,10 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
                             .ifPresent(linkedWorkspaces::add);
                 }
             }
+            configurationManager
+                    .loadWorkspace(workspaceId, projectDirectory)
+                    .map(e -> e.get(WORKSPACE_LINKS))
+                    .ifPresent(l -> elems.put(WORKSPACE_LINKS, l));
             if (elems.containsKey(WORKSPACE_LINKS)) {
                 String[] links = elems.get(WORKSPACE_LINKS).split(",");
                 for (String link : links) {
@@ -342,7 +345,7 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
             boolean cache,
             String pathSegment) {
         switch (scope) {
-            case PROJECT_LOCAL:
+            case PROJECT:
                 if (cache) {
                     return projectDirectory.resolve(Config.MVN_TARGET).resolve(config.cachedDir());
                 } else {

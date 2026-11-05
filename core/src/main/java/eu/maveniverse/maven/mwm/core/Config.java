@@ -46,13 +46,13 @@ public interface Config {
     enum Scope {
         /**
          * Build cache: Cache is stored as {@link #USER}.
-         * Build output: Output is installed either as {@link #PROJECT_LOCAL} or {@link #USER}, depending on is worktree detected or not.
+         * Build output: Output is installed either as {@link #PROJECT} or {@link #USER}, depending on is worktree detected or not.
          */
         AUTO,
         /**
          * Content is kept with project in {@code .mvn/target/[cached|installed]} directory.
          */
-        PROJECT_LOCAL,
+        PROJECT,
         /**
          * Content is kept in user home under {@code ~/.m2/repository/[cached|installed]/$WORKSPACE_ID}.
          */

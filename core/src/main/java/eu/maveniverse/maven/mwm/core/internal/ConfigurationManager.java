@@ -27,7 +27,6 @@ import javax.inject.Singleton;
 @Named
 public class ConfigurationManager {
     private static final String CONFIG_FILE = "mwm.properties";
-    private static final String WORKSPACE_FILE = "workspace.properties";
 
     /**
      * Loads the configuration file, in this order:
@@ -55,12 +54,13 @@ public class ConfigurationManager {
         return new ConfigImpl(config.orElse(new HashMap<>()));
     }
 
-    public Optional<Map<String, String>> loadWorkspace(Path projectDirectory) throws IOException {
-        return load(projectDirectory.resolve(Config.MVN_TARGET).resolve(WORKSPACE_FILE));
+    public Optional<Map<String, String>> loadWorkspace(String workspaceId, Path projectDirectory) throws IOException {
+        return load(projectDirectory.resolve(Config.MVN_TARGET).resolve(workspaceId + ".properties"));
     }
 
-    public void saveWorkspace(Path projectDirectory, Map<String, String> properties) throws IOException {
-        save(projectDirectory.resolve(Config.MVN_TARGET).resolve(WORKSPACE_FILE), properties);
+    public void saveWorkspace(String workspaceId, Path projectDirectory, Map<String, String> properties)
+            throws IOException {
+        save(projectDirectory.resolve(Config.MVN_TARGET).resolve(workspaceId + ".properties"), properties);
     }
 
     private Optional<Map<String, String>> load(Path file) throws IOException {
