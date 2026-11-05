@@ -239,10 +239,38 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
             final String workspaceDiscriminator = String.join("-", workspaceDiscriminatorArr);
             logger.debug("WS {} ({})", workspaceId, workspaceDiscriminator);
 
-            final Path buildCacheDirectory = resolveWorkspacePath(
-                    config, config.getBuildCacheScope(), projectDirectory, localRepository, true, workspaceId);
+            final String pathSegment;
+            Config.WSKey key = config.getWSKey();
+            if (key == Config.WSKey.ID) {
+                pathSegment = workspaceId;
+            } else if (key == Config.WSKey.DISCRIMINATOR) {
+                pathSegment = workspaceDiscriminator;
+            } else {
+                throw new IllegalArgumentException("Invalid WSKey provided: " + key);
+            }
+
+            Map<String, String> effConfig = config.config();
+
+            Config.Scope buildCacheScope = config.getBuildCacheScope();
+            if (buildCacheScope == Config.Scope.AUTO) {
+                buildCacheScope = Config.Scope.USER;
+                effConfig.put(ConfigImpl.BUILD_CACHE_SCOPE, Config.Scope.USER.name());
+            }
+            Config.Scope buildOutputScope = config.getBuildOutputScope();
+            if (buildOutputScope == Config.Scope.AUTO) {
+                if (commonDir != null) {
+                    buildOutputScope = Config.Scope.PROJECT_LOCAL;
+                    effConfig.put(ConfigImpl.BUILD_OUTPUT_SCOPE, Config.Scope.PROJECT_LOCAL.name());
+                } else {
+                    buildOutputScope = Config.Scope.USER;
+                    effConfig.put(ConfigImpl.BUILD_OUTPUT_SCOPE, Config.Scope.USER.name());
+                }
+            }
+
+            final Path buildCacheDirectory =
+                    resolveWorkspacePath(config, buildCacheScope, projectDirectory, localRepository, true, pathSegment);
             final Path buildOutputDirectory = resolveWorkspacePath(
-                    config, config.getBuildOutputScope(), projectDirectory, localRepository, false, workspaceId);
+                    config, buildOutputScope, projectDirectory, localRepository, false, pathSegment);
 
             elems.put("git.remoteName", remoteName);
             elems.put("git.remoteUrl", remoteUrl);
@@ -293,6 +321,7 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
                 }
             }
             return Optional.of(new WorkspaceImpl(
+                    new ConfigImpl(effConfig),
                     workspaceId,
                     workspaceDiscriminator,
                     elems,
@@ -311,23 +340,24 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
             Path projectDirectory,
             Path localRepository,
             boolean cache,
-            String workspaceId) {
-        if (scope == Config.Scope.PROJECT) {
-            if (cache) {
-                return projectDirectory.resolve(Config.MVN_TARGET).resolve(config.cachedDir());
-            } else {
-                return projectDirectory.resolve(Config.MVN_TARGET).resolve(config.installedDir());
-            }
-        } else if (scope == Config.Scope.USER_SCOPED) {
-            if (cache) {
-                return localRepository.resolve(config.cachedDir()).resolve(workspaceId);
-            } else {
-                return localRepository.resolve(config.installedDir()).resolve(workspaceId);
-            }
-        } else if (scope == Config.Scope.USER) {
-            return localRepository;
-        } else {
-            throw new IllegalArgumentException("Invalid build cache scope provided: " + scope);
+            String pathSegment) {
+        switch (scope) {
+            case PROJECT_LOCAL:
+                if (cache) {
+                    return projectDirectory.resolve(Config.MVN_TARGET).resolve(config.cachedDir());
+                } else {
+                    return projectDirectory.resolve(Config.MVN_TARGET).resolve(config.installedDir());
+                }
+            case USER_SCOPED:
+                if (cache) {
+                    return localRepository.resolve(config.cachedDir()).resolve(pathSegment);
+                } else {
+                    return localRepository.resolve(config.installedDir()).resolve(pathSegment);
+                }
+            case USER:
+                return localRepository;
+            default:
+                throw new IllegalArgumentException("Invalid build cache scope provided: " + scope);
         }
     }
 }

@@ -16,6 +16,11 @@ import java.util.Map;
  */
 public interface Workspace {
     /**
+     * The "effective config" of this workspace, never {@code null}.
+     */
+    Config config();
+
+    /**
      * The ID of the workspace.
      */
     String workspaceId();

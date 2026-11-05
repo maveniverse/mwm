@@ -197,7 +197,7 @@ public class DefaultWorkspaceManagerTest {
         Path target = dir.resolve(Config.MVN_TARGET);
         Files.createDirectories(target);
         // pin config, so user's ~/.m2/mwm.properties does not interfere
-        Files.write(target.resolve("mwm.properties"), Collections.singletonList("build-output-scope=project"));
+        Files.write(target.resolve("mwm.properties"), Collections.singletonList("build-output-scope=project_local"));
         if (links.length > 0) {
             List<String> paths = new ArrayList<>();
             for (String link : links) {

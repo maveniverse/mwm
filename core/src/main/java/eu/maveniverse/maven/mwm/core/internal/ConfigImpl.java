@@ -10,8 +10,11 @@ package eu.maveniverse.maven.mwm.core.internal;
 import static java.util.Objects.requireNonNull;
 
 import eu.maveniverse.maven.mwm.core.Config;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
@@ -21,6 +24,7 @@ public class ConfigImpl implements Config {
     static final String DISCRIMINATOR_ELEMENTS = "discriminator-elements";
     static final String WORKTREE_JOINED = "worktree-joined";
     static final String LINK_ENFORCED = "link-enforced";
+    static final String WS_KEY = "ws-key";
     static final String BUILD_CACHE_SCOPE = "build-cache-scope";
     static final String BUILD_OUTPUT_SCOPE = "build-output-scope";
 
@@ -30,14 +34,28 @@ public class ConfigImpl implements Config {
         this.config = requireNonNull(config);
     }
 
+    /**
+     * Returns a snapshot/copy of config map.
+     */
     @Override
-    public String cachedDir() {
-        return config.getOrDefault(CACHED_DIR, Config.super.cachedDir());
+    public Map<String, String> config() {
+        return new HashMap<>(config);
     }
 
     @Override
-    public String installedDir() {
-        return config.getOrDefault(INSTALLED_DIR, Config.super.installedDir());
+    public Path cachedDir() {
+        if (config.containsKey(CACHED_DIR)) {
+            return Paths.get(config.get(CACHED_DIR));
+        }
+        return Config.super.cachedDir();
+    }
+
+    @Override
+    public Path installedDir() {
+        if (config.containsKey(INSTALLED_DIR)) {
+            return Paths.get(config.get(INSTALLED_DIR));
+        }
+        return Config.super.installedDir();
     }
 
     @Override
@@ -63,6 +81,12 @@ public class ConfigImpl implements Config {
     public boolean isLinkEnforced() {
         return Boolean.parseBoolean(
                 config.getOrDefault(LINK_ENFORCED, Boolean.toString(Config.super.isLinkEnforced())));
+    }
+
+    @Override
+    public WSKey getWSKey() {
+        return WSKey.valueOf(
+                config.getOrDefault(WS_KEY, Config.super.getWSKey().name()).toUpperCase(Locale.ROOT));
     }
 
     @Override
