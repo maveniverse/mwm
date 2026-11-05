@@ -156,7 +156,7 @@ public class DefaultWorkspaceManagerTest {
         DefaultWorkspaceManager wm = workspaceManager();
         Path a = project(tmp, "a");
         project(tmp, "b");
-        Path file = a.resolve(Config.MVN_TARGET).resolve("workspace.properties");
+        Path file = wsFile(a);
         // stale key must go, links must stay
         Files.write(
                 file,
@@ -168,11 +168,11 @@ public class DefaultWorkspaceManagerTest {
         assertTrue(new String(Files.readAllBytes(file)).contains("stale=true"));
 
         wm.detectWorkspace(a, tmp.resolve("repo"), Collections.emptyMap(), true);
-        Map<String, String> saved = new ConfigurationManager().loadWorkspace(a).orElseThrow(AssertionError::new);
+        Map<String, String> saved =
+                new ConfigurationManager().loadWorkspace(wsId(a), a).orElseThrow(AssertionError::new);
         assertFalse(saved.containsKey("stale"));
         assertTrue(saved.containsKey("workspace.links"));
-        assertTrue(
-                Files.isRegularFile(tmp.resolve("b").resolve(Config.MVN_TARGET).resolve("workspace.properties")));
+        assertTrue(Files.isRegularFile(wsFile(tmp.resolve("b"))));
 
         FileTime old = FileTime.fromMillis(0);
         Files.setLastModifiedTime(file, old);
@@ -192,6 +192,15 @@ public class DefaultWorkspaceManagerTest {
         }));
     }
 
+    // matches ID produced by workspaceManager() stub: origin, github.com/o/<dir name>, main
+    private static String wsId(Path dir) {
+        return "origin-github.com-o-" + dir.getFileName() + "-main";
+    }
+
+    private static Path wsFile(Path dir) {
+        return dir.resolve(Config.MVN_TARGET).resolve(wsId(dir) + ".properties");
+    }
+
     private static Path project(Path tmp, String name, String... links) throws IOException {
         Path dir = tmp.resolve(name);
         Path target = dir.resolve(Config.MVN_TARGET);
@@ -203,9 +212,7 @@ public class DefaultWorkspaceManagerTest {
             for (String link : links) {
                 paths.add(tmp.resolve(link).toString().replace('\\', '/'));
             }
-            Files.write(
-                    target.resolve("workspace.properties"),
-                    Collections.singletonList("workspace.links=" + String.join(",", paths)));
+            Files.write(wsFile(dir), Collections.singletonList("workspace.links=" + String.join(",", paths)));
         }
         return dir;
     }

@@ -18,7 +18,7 @@ import java.util.Optional;
 public interface WorkspaceManager {
     /**
      * Detects a workspace handle. If {@code persist}, the detected workspace (and linked ones) properties are saved
-     * into {@code .mvn/target/workspace.properties}, if changed.
+     * into {@code .mvn/target/$WORKSPACE_ID.properties}, if changed.
      */
     Optional<Workspace> detectWorkspace(
             Path projectDirectory, Path localRepository, Map<String, String> properties, boolean persist)

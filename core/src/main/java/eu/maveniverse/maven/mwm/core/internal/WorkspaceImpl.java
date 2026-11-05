@@ -9,12 +9,14 @@ package eu.maveniverse.maven.mwm.core.internal;
 
 import static java.util.Objects.requireNonNull;
 
+import eu.maveniverse.maven.mwm.core.Config;
 import eu.maveniverse.maven.mwm.core.Workspace;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
 public class WorkspaceImpl implements Workspace {
+    private final Config config;
     private final String workspaceId;
     private final String discriminator;
     private final Map<String, String> properties;
@@ -25,6 +27,7 @@ public class WorkspaceImpl implements Workspace {
     private final List<Workspace> linkedWorkspaces;
 
     public WorkspaceImpl(
+            Config config,
             String workspaceId,
             String discriminator,
             Map<String, String> properties,
@@ -33,6 +36,7 @@ public class WorkspaceImpl implements Workspace {
             Path buildCacheDirectory,
             Path buildOutputDirectory,
             List<Workspace> linkedWorkspaces) {
+        this.config = requireNonNull(config);
         this.workspaceId = requireNonNull(workspaceId);
         this.discriminator = requireNonNull(discriminator);
         this.properties = requireNonNull(properties);
@@ -41,6 +45,11 @@ public class WorkspaceImpl implements Workspace {
         this.buildCacheDirectory = requireNonNull(buildCacheDirectory);
         this.buildOutputDirectory = requireNonNull(buildOutputDirectory);
         this.linkedWorkspaces = requireNonNull(linkedWorkspaces);
+    }
+
+    @Override
+    public Config config() {
+        return config;
     }
 
     @Override

@@ -7,7 +7,11 @@
  */
 package eu.maveniverse.maven.mwm.core;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.EnumSet;
+import java.util.Map;
 
 /**
  * Maven Workspace Manager global configuration.
@@ -23,9 +27,28 @@ public interface Config {
     String MVN_TARGET = ".mvn/target";
 
     /**
+     * What to use as workspace key, when it comes to paths?
+     */
+    enum WSKey {
+        /**
+         * Will use workspace ID, as MWM did so far.
+         */
+        ID,
+        /**
+         * Will use workspace discriminator, allows cross project sharing.
+         */
+        DISCRIMINATOR;
+    }
+
+    /**
      * Project scoped, user scoped.
      */
     enum Scope {
+        /**
+         * Build cache: Cache is stored as {@link #USER}.
+         * Build output: Output is installed either as {@link #PROJECT} or {@link #USER}, depending on is worktree detected or not.
+         */
+        AUTO,
         /**
          * Content is kept with project in {@code .mvn/target/[cached|installed]} directory.
          */
@@ -66,17 +89,24 @@ public interface Config {
     }
 
     /**
+     * Returns a snapshot/copy of config map.
+     */
+    default Map<String, String> config() {
+        return Collections.emptyMap();
+    }
+
+    /**
      * The name of the directory for cached artifacts.
      */
-    default String cachedDir() {
-        return "cached";
+    default Path cachedDir() {
+        return Paths.get("cached");
     }
 
     /**
      * The name of the directory for installed artifacts.
      */
-    default String installedDir() {
-        return "installed";
+    default Path installedDir() {
+        return Paths.get("installed");
     }
 
     /**
@@ -107,6 +137,13 @@ public interface Config {
     }
 
     /**
+     * The WS key to use.
+     */
+    default WSKey getWSKey() {
+        return WSKey.ID;
+    }
+
+    /**
      * The scope of build cache.
      */
     default Scope getBuildCacheScope() {
@@ -117,6 +154,6 @@ public interface Config {
      * The scope of build output.
      */
     default Scope getBuildOutputScope() {
-        return Scope.PROJECT;
+        return Scope.AUTO;
     }
 }

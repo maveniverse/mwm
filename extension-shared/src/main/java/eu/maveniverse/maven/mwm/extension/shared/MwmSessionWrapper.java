@@ -95,10 +95,20 @@ public final class MwmSessionWrapper {
             if (workspace != null) {
                 // proto session shares data with "real" one
                 protoSession.getData().set(Workspace.class, workspace);
-                logger.info("Using MWM workspace: {}", workspace.workspaceId());
+                logger.info(
+                        "Using MWM workspace: {} (cache: {}; install: {})",
+                        workspace.workspaceId(),
+                        workspace.config().getBuildCacheScope(),
+                        workspace.config().getBuildOutputScope());
                 if (logger.isDebugEnabled()) {
-                    logger.debug("* cache  : {}", workspace.buildCacheDirectory());
-                    logger.debug("* install: {}", workspace.buildOutputDirectory());
+                    logger.debug(
+                            "* cache  : {} {}",
+                            workspace.config().getBuildCacheScope(),
+                            workspace.buildCacheDirectory());
+                    logger.debug(
+                            "* install: {} {}",
+                            workspace.config().getBuildOutputScope(),
+                            workspace.buildOutputDirectory());
                     if (!workspace.linkedWorkspaces().isEmpty()) {
                         logger.debug(
                                 "  Linked workspaces: {}",
