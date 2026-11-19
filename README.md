@@ -106,7 +106,7 @@ Scopes:
 | `USER_SCOPED` | `$MAVEN_LOCAL_REPOSITORY/cached/$workspace` or `$MAVEN_LOCAL_REPOSITORY/installed/$workspace` |
 | `USER`        | `$MAVEN_LOCAL_REPOSITORY`, as Maven does by default.                                        |
 
-When both scopes are set to `USER`, MWM stays inactive. Workspace ID parts that are not safe for directory names
+When both scopes resolve to `USER` (`AUTO` included), MWM stays inactive. Workspace ID parts that are not safe for directory names
 are altered: for example, branch `feature/x` becomes `feature_x-<hash>`.
 
 MWM also stays inactive if:

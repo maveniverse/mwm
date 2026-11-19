@@ -198,6 +198,18 @@ public class DefaultWorkspaceManagerTest {
         assertEquals(repo, ws.buildCacheDirectory());
     }
 
+    @Test
+    void inactiveWhenScopesResolveToUser(@TempDir Path tmp) throws IOException {
+        Path a = tmp.resolve("a");
+        Files.createDirectories(a.resolve(Config.MVN_TARGET));
+        Files.write(
+                a.resolve(Config.MVN_TARGET).resolve("mwm.properties"),
+                java.util.Arrays.asList("build-cache-scope=auto", "build-output-scope=user"));
+        assertFalse(workspaceManager()
+                .detectWorkspace(a, tmp.resolve("repo"), Collections.emptyMap(), false)
+                .isPresent());
+    }
+
     private static DefaultWorkspaceManager workspaceManager() {
         return new DefaultWorkspaceManager(new ConfigurationManager(), new PropertiesManager(c -> {
             Map<String, String> p = new HashMap<>();

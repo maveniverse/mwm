@@ -141,17 +141,12 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
         if (propsOptional.isPresent()) {
             Map<String, String> props = propsOptional.orElse(Collections.emptyMap());
             final Config config = configurationManager.getConfig(projectDirectory, props);
-            if (config.getBuildOutputScope() != Config.Scope.USER || config.getBuildCacheScope() != Config.Scope.USER) {
-                Optional<Workspace> wo =
-                        detectWorkspace(config, processedPds, projectDirectory, localRepository, props);
-                if (wo.isPresent()) {
-                    logger.debug("Workspace detected");
-                    return wo;
-                } else {
-                    logger.debug("No workspace detected");
-                }
+            Optional<Workspace> wo = detectWorkspace(config, processedPds, projectDirectory, localRepository, props);
+            if (wo.isPresent()) {
+                logger.debug("Workspace detected");
+                return wo;
             } else {
-                logger.debug("MWM configured to not interfere");
+                logger.debug("No workspace detected");
             }
         }
         return Optional.empty();
@@ -255,6 +250,12 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
                     buildOutputScope = Config.Scope.USER_SCOPED;
                     effConfig.put(ConfigImpl.BUILD_OUTPUT_SCOPE, Config.Scope.USER_SCOPED.name());
                 }
+            }
+
+            if (buildCacheScope == Config.Scope.USER && buildOutputScope == Config.Scope.USER) {
+                // checked after AUTO is resolved: this is plain Maven, nothing to do
+                logger.debug("MWM configured to not interfere");
+                return Optional.empty();
             }
 
             final String pathSegment;
