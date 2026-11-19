@@ -9,4 +9,5 @@ File buildLog = new File( basedir, 'build.log' )
 assert buildLog.exists()
 String buildLogString = buildLog.text
 
-assert buildLogString.contains('[INFO] Using MWM workspace: origin-github.com-maveniverse-mwm-my-branch')
+// no worktree: AUTO build output scope resolves to USER_SCOPED (per workspace, so per branch)
+assert buildLogString.contains('[INFO] Using MWM workspace: origin-github.com-maveniverse-mwm-my-branch (cache: USER; install: USER_SCOPED)')

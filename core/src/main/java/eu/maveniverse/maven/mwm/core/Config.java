@@ -46,7 +46,7 @@ public interface Config {
     enum Scope {
         /**
          * Build cache: Cache is stored as {@link #USER}.
-         * Build output: Output is installed either as {@link #PROJECT} or {@link #USER}, depending on is worktree detected or not.
+         * Build output: Output is installed as {@link #PROJECT} if git worktree is detected, otherwise as {@link #USER_SCOPED}.
          */
         AUTO,
         /**

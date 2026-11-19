@@ -251,8 +251,9 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
                     buildOutputScope = Config.Scope.PROJECT;
                     effConfig.put(ConfigImpl.BUILD_OUTPUT_SCOPE, Config.Scope.PROJECT.name());
                 } else {
-                    buildOutputScope = Config.Scope.USER;
-                    effConfig.put(ConfigImpl.BUILD_OUTPUT_SCOPE, Config.Scope.USER.name());
+                    // per-workspace output, so a branch switch switches the output as well
+                    buildOutputScope = Config.Scope.USER_SCOPED;
+                    effConfig.put(ConfigImpl.BUILD_OUTPUT_SCOPE, Config.Scope.USER_SCOPED.name());
                 }
             }
 

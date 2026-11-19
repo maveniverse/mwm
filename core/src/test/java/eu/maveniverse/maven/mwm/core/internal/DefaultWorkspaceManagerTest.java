@@ -180,6 +180,24 @@ public class DefaultWorkspaceManagerTest {
         assertEquals(old, Files.getLastModifiedTime(file));
     }
 
+    @Test
+    void autoOutputScopeIsUserScopedWithoutWorktree(@TempDir Path tmp) throws IOException {
+        Path a = tmp.resolve("a");
+        Files.createDirectories(a.resolve(Config.MVN_TARGET));
+        // any project config, so user's ~/.m2/mwm.properties does not interfere; scopes stay default
+        Files.write(
+                a.resolve(Config.MVN_TARGET).resolve("mwm.properties"),
+                Collections.singletonList("worktree-joined=true"));
+        Path repo = tmp.resolve("repo");
+        Workspace ws = workspaceManager()
+                .detectWorkspace(a, repo, Collections.emptyMap(), false)
+                .orElseThrow(AssertionError::new);
+        assertEquals(Config.Scope.USER_SCOPED, ws.config().getBuildOutputScope());
+        assertEquals(repo.resolve("installed").resolve(wsId(a)), ws.buildOutputDirectory());
+        assertEquals(Config.Scope.USER, ws.config().getBuildCacheScope());
+        assertEquals(repo, ws.buildCacheDirectory());
+    }
+
     private static DefaultWorkspaceManager workspaceManager() {
         return new DefaultWorkspaceManager(new ConfigurationManager(), new PropertiesManager(c -> {
             Map<String, String> p = new HashMap<>();
