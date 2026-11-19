@@ -149,6 +149,16 @@ public class DefaultWorkspaceManagerTest {
     }
 
     @Test
+    void linkRejectsCommaInPath(@TempDir Path tmp) throws IOException {
+        DefaultWorkspaceManager wm = workspaceManager();
+        Workspace a = wm.detectWorkspace(project(tmp, "a"), tmp.resolve("repo"), Collections.emptyMap(), false)
+                .orElseThrow(AssertionError::new);
+        Workspace b = wm.detectWorkspace(project(tmp, "b,c"), tmp.resolve("repo"), Collections.emptyMap(), false)
+                .orElseThrow(AssertionError::new);
+        assertThrows(IOException.class, () -> wm.linkWorkspace(a, b));
+    }
+
+    @Test
     void workspaceIdIsPathSafe(@TempDir Path tmp) throws IOException {
         Map<String, String> props = new HashMap<>();
         props.put(PropertiesManager.KEY_REMOTE_NAME, "origin");

@@ -84,6 +84,10 @@ public class DefaultWorkspaceManager implements WorkspaceManager {
                 .loadWorkspace(target.workspaceId(), target.projectDirectory())
                 .orElseGet(HashMap::new);
         String link = other.projectDirectory().toString();
+        if (link.contains(",")) {
+            // links are stored comma separated
+            throw new IOException("Cannot link Workspace with ',' in its path: " + link);
+        }
         if (props.containsKey(WORKSPACE_LINKS)) {
             List<String> links = Arrays.asList(props.get(WORKSPACE_LINKS).split(","));
             if (links.contains(link)) {
