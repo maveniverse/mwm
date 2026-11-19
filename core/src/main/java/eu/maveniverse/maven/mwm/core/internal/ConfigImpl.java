@@ -65,7 +65,7 @@ public class ConfigImpl implements Config {
             Arrays.stream(config.get(DISCRIMINATOR_ELEMENTS).split(","))
                     .map(String::trim)
                     .filter(s -> !s.isEmpty())
-                    .forEach(s -> res.add(DiscriminatorElements.valueOf(s.toUpperCase(Locale.ROOT))));
+                    .forEach(s -> res.add(enumValue(DiscriminatorElements.class, DISCRIMINATOR_ELEMENTS, s)));
             return res;
         }
         return Config.super.getDiscriminatorElements();
@@ -85,21 +85,38 @@ public class ConfigImpl implements Config {
 
     @Override
     public WSKey getWSKey() {
-        return WSKey.valueOf(
-                config.getOrDefault(WS_KEY, Config.super.getWSKey().name()).toUpperCase(Locale.ROOT));
+        return enumValue(
+                WSKey.class,
+                WS_KEY,
+                config.getOrDefault(WS_KEY, Config.super.getWSKey().name()));
     }
 
     @Override
     public Scope getBuildCacheScope() {
-        return Scope.valueOf(config.getOrDefault(
-                        BUILD_CACHE_SCOPE, Config.super.getBuildCacheScope().name())
-                .toUpperCase(Locale.ROOT));
+        return enumValue(
+                Scope.class,
+                BUILD_CACHE_SCOPE,
+                config.getOrDefault(
+                        BUILD_CACHE_SCOPE, Config.super.getBuildCacheScope().name()));
     }
 
     @Override
     public Scope getBuildOutputScope() {
-        return Scope.valueOf(config.getOrDefault(
-                        BUILD_OUTPUT_SCOPE, Config.super.getBuildOutputScope().name())
-                .toUpperCase(Locale.ROOT));
+        return enumValue(
+                Scope.class,
+                BUILD_OUTPUT_SCOPE,
+                config.getOrDefault(
+                        BUILD_OUTPUT_SCOPE, Config.super.getBuildOutputScope().name()));
+    }
+
+    private static <E extends Enum<E>> E enumValue(Class<E> type, String key, String value) {
+        try {
+            return Enum.valueOf(type, value.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(
+                    "Invalid value '" + value + "' for MWM configuration key '" + key + "' (mwm.properties); allowed: "
+                            + Arrays.toString(type.getEnumConstants()),
+                    e);
+        }
     }
 }

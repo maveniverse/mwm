@@ -54,6 +54,18 @@ public class DefaultWorkspaceManagerTest {
     }
 
     @Test
+    void invalidConfigValueNamesKey() {
+        IllegalArgumentException e = assertThrows(
+                IllegalArgumentException.class,
+                () -> new ConfigImpl(Collections.singletonMap(ConfigImpl.BUILD_OUTPUT_SCOPE, "user-scoped"))
+                        .getBuildOutputScope());
+        assertTrue(
+                e.getMessage().contains("'user-scoped' for MWM configuration key 'build-output-scope'"),
+                e.getMessage());
+        assertTrue(e.getMessage().contains("USER_SCOPED"), e.getMessage());
+    }
+
+    @Test
     void linkCycleAndDiamond(@TempDir Path tmp) throws IOException {
         // a -> b, a -> c, b -> a (cycle), b -> d, c -> d (diamond)
         Path a = project(tmp, "a", "b", "c");
