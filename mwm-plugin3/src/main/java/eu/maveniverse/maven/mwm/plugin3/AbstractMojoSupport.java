@@ -9,7 +9,6 @@ package eu.maveniverse.maven.mwm.plugin3;
 
 import eu.maveniverse.maven.mwm.core.Workspace;
 import eu.maveniverse.maven.mwm.core.WorkspaceManager;
-import eu.maveniverse.maven.shared.core.fs.FileUtils;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -65,18 +64,6 @@ public abstract class AbstractMojoSupport extends AbstractMojo {
                     false);
         }
         return Optional.of(workspace);
-    }
-
-    /**
-     * Detects the workspace at {@code other} path (resolved against basedir), never persists.
-     */
-    protected Optional<Workspace> detectOtherWorkspace(Workspace workspace, String other) throws IOException {
-        Path basedir = FileUtils.discoverPathFromSystemProperty(
-                "basedir", FileUtils.discoverUserCurrentWorkingDirectory().toString());
-        Map<String, String> properties = getConfigPropertiesAsString();
-        // git properties of current checkout (ie. from Nisse extension) must not be reused for other checkout
-        properties.keySet().removeIf(k -> k.startsWith("nisse.jgit."));
-        return workspaceManager.detectWorkspace(basedir.resolve(other), workspace.localRepository(), properties, false);
     }
 
     protected void dumpWorkspace(Workspace workspace) {

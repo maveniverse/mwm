@@ -8,41 +8,21 @@
 package eu.maveniverse.maven.mwm.plugin3;
 
 import eu.maveniverse.maven.mwm.core.Workspace;
-import java.util.Optional;
-import org.apache.maven.plugin.MojoExecutionException;
+import java.io.IOException;
 import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
 
 /**
  * MWM workspace link.
  */
 @Mojo(name = "link", threadSafe = true, requiresProject = false)
-public class LinkMojo extends AbstractMojoSupport {
-    @Parameter(property = "mwm.other", required = true)
-    private String other;
-
+public class LinkMojo extends AbstractLinkMojoSupport {
     @Override
-    public void execute() throws MojoExecutionException {
-        try {
-            Optional<Workspace> workspace = getWorkspace();
-            if (workspace.isPresent()) {
-                Workspace ws = workspace.orElseThrow(() -> new MojoExecutionException("value not present"));
-                Optional<Workspace> otherWs = detectOtherWorkspace(ws, other);
-                if (otherWs.isPresent()) {
-                    Workspace ot = otherWs.orElseThrow(() -> new MojoExecutionException("value not present"));
-                    if (workspaceManager.linkWorkspace(ws, ot)) {
-                        logger.info("Workspace {} linked with {}", ws.workspaceId(), ot.workspaceId());
-                    } else {
-                        logger.info("Workspace {} was already linked with {}", ws.workspaceId(), ot.workspaceId());
-                    }
-                } else {
-                    logger.info("Other Workspace {} not found", other);
-                }
-            } else {
-                logger.info("Workspace not found.");
-            }
-        } catch (Exception e) {
-            throw new MojoExecutionException("Error while linking MWM workspace", e);
+    protected void execute(Workspace workspace, Workspace otherWorkspace) throws IOException {
+        if (workspaceManager.linkWorkspace(workspace, otherWorkspace)) {
+            logger.info("Workspace {} linked with {}", workspace.workspaceId(), otherWorkspace.workspaceId());
+        } else {
+            logger.info(
+                    "Workspace {} was already linked with {}", workspace.workspaceId(), otherWorkspace.workspaceId());
         }
     }
 }

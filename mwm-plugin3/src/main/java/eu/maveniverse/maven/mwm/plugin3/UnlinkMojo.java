@@ -8,41 +8,20 @@
 package eu.maveniverse.maven.mwm.plugin3;
 
 import eu.maveniverse.maven.mwm.core.Workspace;
-import java.util.Optional;
-import org.apache.maven.plugin.MojoExecutionException;
+import java.io.IOException;
 import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
 
 /**
  * MWM workspace unlink.
  */
 @Mojo(name = "unlink", threadSafe = true, requiresProject = false)
-public class UnlinkMojo extends AbstractMojoSupport {
-    @Parameter(property = "mwm.other", required = true)
-    private String other;
-
+public class UnlinkMojo extends AbstractLinkMojoSupport {
     @Override
-    public void execute() throws MojoExecutionException {
-        try {
-            Optional<Workspace> workspace = getWorkspace();
-            if (workspace.isPresent()) {
-                Workspace ws = workspace.orElseThrow(() -> new MojoExecutionException("value not present"));
-                Optional<Workspace> otherWs = detectOtherWorkspace(ws, other);
-                if (otherWs.isPresent()) {
-                    Workspace ot = otherWs.orElseThrow(() -> new MojoExecutionException("value not present"));
-                    if (workspaceManager.unlinkWorkspace(ws, ot)) {
-                        logger.info("Workspace {} unlinked from {}", ws.workspaceId(), ot.workspaceId());
-                    } else {
-                        logger.info("Workspace {} was not linked with {}", ws.workspaceId(), ot.workspaceId());
-                    }
-                } else {
-                    logger.info("Other Workspace {} not found", other);
-                }
-            } else {
-                logger.info("Workspace not found.");
-            }
-        } catch (Exception e) {
-            throw new MojoExecutionException("Error while unlinking MWM workspace", e);
+    protected void execute(Workspace workspace, Workspace otherWorkspace) throws IOException {
+        if (workspaceManager.unlinkWorkspace(workspace, otherWorkspace)) {
+            logger.info("Workspace {} unlinked from {}", workspace.workspaceId(), otherWorkspace.workspaceId());
+        } else {
+            logger.info("Workspace {} was not linked with {}", workspace.workspaceId(), otherWorkspace.workspaceId());
         }
     }
 }
