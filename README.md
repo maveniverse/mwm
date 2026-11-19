@@ -74,9 +74,60 @@ To use it, add the following to your project or user-wide (3.10+ feature) `exten
 </extensions>
 ```
 
-To try it out, one can use `mvn mwm:detect` goal (full coordinates of mojo is `eu.maveniverse.maven.plugins:mwm-plugin3:detect`;
-the `mwm` prefix works only if `eu.maveniverse.maven.plugins` is added to `pluginGroups` in your `settings.xml`).
+Note: MWM writes its files into `.mvn/target/` directory of the checkout (workspace state, and in case of
+git worktree, the installed artifacts as well). Add `.mvn/target/` to your `.gitignore`, just like `target/`.
 
-Requirements:
+## Configuration
+
+MWM is configured with a Java properties file named `mwm.properties`, looked up in this order (the first file
+found is used as whole, files are not merged):
+
+1. `.mvn/target/mwm.properties` in the checkout
+2. in case of git worktree, `.mvn/target/mwm.properties` in the main checkout
+3. `~/.m2/mwm.properties`
+
+| Key                      | Default             | Meaning                                                                                                     |
+|--------------------------|---------------------|-------------------------------------------------------------------------------------------------------------|
+| `build-cache-scope`      | `USER`              | Where downloaded artifacts are cached; see scopes below.                                                    |
+| `build-output-scope`     | `AUTO`              | Where built artifacts are installed; see scopes below.                                                      |
+| `ws-key`                 | `ID`                | Which one names the workspace directories: `ID` or `DISCRIMINATOR` (allows sharing across projects).        |
+| `discriminator-elements` | `HOST,OWNER,BRANCH` | Comma separated elements of discriminator, out of `REMOTE`, `HOST`, `OWNER`, `REPOSITORY`, `BRANCH`.        |
+| `worktree-joined`        | `true`              | In a git worktree, use the main checkout workspace as well (for artifacts not built in worktree).           |
+| `link-enforced`          | `true`              | Fail the build if a linked workspace cannot be detected; if `false`, it is skipped with a warning.          |
+| `cached-dir`             | `cached`            | Directory name used for cached artifacts in `PROJECT` and `USER_SCOPED` scopes.                             |
+| `installed-dir`          | `installed`         | Directory name used for installed artifacts in `PROJECT` and `USER_SCOPED` scopes.                          |
+
+Scopes:
+
+| Scope         | Location                                                                                    |
+|---------------|---------------------------------------------------------------------------------------------|
+| `AUTO`        | Cache: `USER`. Output: `PROJECT` in a git worktree, otherwise `USER_SCOPED`.                |
+| `PROJECT`     | `.mvn/target/cached` or `.mvn/target/installed` in the checkout.                            |
+| `USER_SCOPED` | `$MAVEN_LOCAL_REPOSITORY/cached/$workspace` or `$MAVEN_LOCAL_REPOSITORY/installed/$workspace` |
+| `USER`        | `$MAVEN_LOCAL_REPOSITORY`, as Maven does by default.                                        |
+
+When both scopes are set to `USER`, MWM stays inactive. Workspace ID parts that are not safe for directory names
+are altered: for example, branch `feature/x` becomes `feature_x-<hash>`.
+
+MWM also stays inactive if:
+* it is disabled with `-Dmwm.disabled=true`
+* split local repository is enabled (`aether.lrm.enhanced.split`)
+* chained local repository is used
+
+## Goals
+
+The `mwm-plugin3` Maven Plugin (coordinates `eu.maveniverse.maven.plugins:mwm-plugin3`) has these goals (the `mwm`
+prefix works only if `eu.maveniverse.maven.plugins` is added to `pluginGroups` in your `settings.xml`):
+
+* `mvn mwm:detect`: shows the detected workspace, its directories and linked workspaces.
+* `mvn mwm:link -Dmwm.other=../other-project`: links the workspace of other checkout to current workspace, so
+  artifacts installed by other checkout are visible to current one.
+* `mvn mwm:unlink -Dmwm.other=../other-project`: removes such a link.
+
+Links are stored in `.mvn/target/$workspaceId.properties`, so they belong to the workspace, hence to the current
+branch: a link made on `main` branch is not present on other branches.
+
+## Requirements
+
 * Java: 8+
 * Maven: 3.10+
