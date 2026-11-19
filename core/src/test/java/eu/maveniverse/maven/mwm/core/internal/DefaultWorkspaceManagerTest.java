@@ -54,6 +54,18 @@ public class DefaultWorkspaceManagerTest {
     }
 
     @Test
+    void invalidConfigValueNamesKey() {
+        IllegalArgumentException e = assertThrows(
+                IllegalArgumentException.class,
+                () -> new ConfigImpl(Collections.singletonMap(ConfigImpl.BUILD_OUTPUT_SCOPE, "user-scoped"))
+                        .getBuildOutputScope());
+        assertTrue(
+                e.getMessage().contains("'user-scoped' for MWM configuration key 'build-output-scope'"),
+                e.getMessage());
+        assertTrue(e.getMessage().contains("USER_SCOPED"), e.getMessage());
+    }
+
+    @Test
     void linkCycleAndDiamond(@TempDir Path tmp) throws IOException {
         // a -> b, a -> c, b -> a (cycle), b -> d, c -> d (diamond)
         Path a = project(tmp, "a", "b", "c");
@@ -137,6 +149,16 @@ public class DefaultWorkspaceManagerTest {
     }
 
     @Test
+    void linkRejectsCommaInPath(@TempDir Path tmp) throws IOException {
+        DefaultWorkspaceManager wm = workspaceManager();
+        Workspace a = wm.detectWorkspace(project(tmp, "a"), tmp.resolve("repo"), Collections.emptyMap(), false)
+                .orElseThrow(AssertionError::new);
+        Workspace b = wm.detectWorkspace(project(tmp, "b,c"), tmp.resolve("repo"), Collections.emptyMap(), false)
+                .orElseThrow(AssertionError::new);
+        assertThrows(IOException.class, () -> wm.linkWorkspace(a, b));
+    }
+
+    @Test
     void workspaceIdIsPathSafe(@TempDir Path tmp) throws IOException {
         Map<String, String> props = new HashMap<>();
         props.put(PropertiesManager.KEY_REMOTE_NAME, "origin");
@@ -196,6 +218,18 @@ public class DefaultWorkspaceManagerTest {
         assertEquals(repo.resolve("installed").resolve(wsId(a)), ws.buildOutputDirectory());
         assertEquals(Config.Scope.USER, ws.config().getBuildCacheScope());
         assertEquals(repo, ws.buildCacheDirectory());
+    }
+
+    @Test
+    void inactiveWhenScopesResolveToUser(@TempDir Path tmp) throws IOException {
+        Path a = tmp.resolve("a");
+        Files.createDirectories(a.resolve(Config.MVN_TARGET));
+        Files.write(
+                a.resolve(Config.MVN_TARGET).resolve("mwm.properties"),
+                java.util.Arrays.asList("build-cache-scope=auto", "build-output-scope=user"));
+        assertFalse(workspaceManager()
+                .detectWorkspace(a, tmp.resolve("repo"), Collections.emptyMap(), false)
+                .isPresent());
     }
 
     private static DefaultWorkspaceManager workspaceManager() {

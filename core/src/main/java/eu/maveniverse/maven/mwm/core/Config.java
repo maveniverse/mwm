@@ -16,7 +16,7 @@ import java.util.Map;
 /**
  * Maven Workspace Manager global configuration.
  * <p>
- * Note: when both, {@link #getBuildCacheScope()} and {@link #getBuildOutputScope()} set to {@link Scope#USER}, MWM
+ * Note: when both, {@link #getBuildCacheScope()} and {@link #getBuildOutputScope()} resolve to {@link Scope#USER}, MWM
  * will keep itself inactive, as that configuration is basically "let Maven work as by default".
  */
 public interface Config {
