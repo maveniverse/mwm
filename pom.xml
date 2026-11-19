@@ -45,20 +45,20 @@
   </modules>
 
   <scm>
-    <connection>scm:git:git@github.com:maveniverse/nisse.git</connection>
-    <developerConnection>scm:git:git@github.com:maveniverse/nisse.git</developerConnection>
+    <connection>scm:git:git@github.com:maveniverse/mwm.git</connection>
+    <developerConnection>scm:git:git@github.com:maveniverse/mwm.git</developerConnection>
     <tag>HEAD</tag>
-    <url>https://github.com/maveniverse/nisse</url>
+    <url>https://github.com/maveniverse/mwm</url>
   </scm>
 
   <issueManagement>
     <system>Github</system>
-    <url>https://github.com/maveniverse/nisse/issues</url>
+    <url>https://github.com/maveniverse/mwm/issues</url>
   </issueManagement>
 
   <ciManagement>
     <system>Github</system>
-    <url>https://github.com/maveniverse/nisse/actions</url>
+    <url>https://github.com/maveniverse/mwm/actions</url>
   </ciManagement>
 
   <properties>
